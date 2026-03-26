@@ -327,6 +327,29 @@ body {
     transform: translateX(20px);
 }
 
+/* Recompute button */
+#recompute-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 4px;
+    background: #2196f3;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+#recompute-btn:hover {
+    background: #1976d2;
+}
+
+#recompute-btn:active {
+    background: #1565c0;
+}
+
 /* Results */
 .results-section {
     border-top: 1px solid #222;
