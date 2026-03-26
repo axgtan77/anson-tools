@@ -527,6 +527,9 @@ swapBtn.addEventListener('click', () => {
     tryCalculateRoute();
 });
 
+// Recompute button
+document.getElementById('recompute-btn').addEventListener('click', tryCalculateRoute);
+
 // Model selector
 const modelSelect = document.getElementById('model-select');
 
