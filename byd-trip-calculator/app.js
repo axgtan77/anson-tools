@@ -1,13 +1,122 @@
 // BYD Atto 3 Trip Calculator
 
-const BATTERY_CAPACITY = 60.48; // kWh
-
-// Base consumption rates in kWh/100km
-const CONSUMPTION_RATES = {
-    eco: 14.0,
-    normal: 16.5,
-    sport: 19.5,
+// EV model database: battery capacity (kWh) and consumption rates (kWh/100km) per driving style
+const EV_MODELS = {
+    'byd-atto3': {
+        name: 'BYD Atto 3',
+        battery: 60.48,
+        range: 420,
+        consumption: { eco: 14.0, normal: 16.5, sport: 19.5 },
+        motor: '150 kW / 201 hp',
+        fastCharge: '80 kW (30-80% in 29 min)',
+    },
+    'byd-seal': {
+        name: 'BYD Seal',
+        battery: 82.56,
+        range: 570,
+        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        motor: '230 kW / 308 hp',
+        fastCharge: '150 kW (30-80% in 26 min)',
+    },
+    'byd-dolphin': {
+        name: 'BYD Dolphin',
+        battery: 60.48,
+        range: 427,
+        consumption: { eco: 12.5, normal: 15.0, sport: 17.5 },
+        motor: '150 kW / 201 hp',
+        fastCharge: '80 kW (30-80% in 29 min)',
+    },
+    'byd-han': {
+        name: 'BYD Han',
+        battery: 85.44,
+        range: 521,
+        consumption: { eco: 15.0, normal: 17.5, sport: 21.0 },
+        motor: '380 kW / 510 hp (AWD)',
+        fastCharge: '120 kW (30-80% in 28 min)',
+    },
+    'tesla-model3-lr': {
+        name: 'Tesla Model 3 Long Range',
+        battery: 78.1,
+        range: 629,
+        consumption: { eco: 12.0, normal: 14.5, sport: 17.5 },
+        motor: '366 kW / 491 hp (AWD)',
+        fastCharge: '250 kW (30-80% in 22 min)',
+    },
+    'tesla-modely-lr': {
+        name: 'Tesla Model Y Long Range',
+        battery: 78.1,
+        range: 533,
+        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        motor: '378 kW / 507 hp (AWD)',
+        fastCharge: '250 kW (30-80% in 25 min)',
+    },
+    'tesla-model3-sr': {
+        name: 'Tesla Model 3 Standard Range',
+        battery: 60.0,
+        range: 513,
+        consumption: { eco: 11.0, normal: 13.5, sport: 16.0 },
+        motor: '208 kW / 279 hp',
+        fastCharge: '170 kW (30-80% in 20 min)',
+    },
+    'mg4-lr': {
+        name: 'MG4 Long Range',
+        battery: 64.0,
+        range: 450,
+        consumption: { eco: 13.0, normal: 15.5, sport: 18.5 },
+        motor: '150 kW / 201 hp',
+        fastCharge: '135 kW (30-80% in 26 min)',
+    },
+    'hyundai-ioniq5-lr': {
+        name: 'Hyundai Ioniq 5 Long Range',
+        battery: 77.4,
+        range: 507,
+        consumption: { eco: 14.0, normal: 16.5, sport: 19.5 },
+        motor: '225 kW / 302 hp',
+        fastCharge: '240 kW (10-80% in 18 min)',
+    },
+    'kia-ev6-lr': {
+        name: 'Kia EV6 Long Range',
+        battery: 77.4,
+        range: 528,
+        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        motor: '229 kW / 307 hp',
+        fastCharge: '240 kW (10-80% in 18 min)',
+    },
+    'nissan-leaf-eplus': {
+        name: 'Nissan Leaf e+',
+        battery: 62.0,
+        range: 385,
+        consumption: { eco: 14.5, normal: 17.0, sport: 20.0 },
+        motor: '160 kW / 214 hp',
+        fastCharge: '46 kW (30-80% in 45 min)',
+    },
+    'volvo-ex30': {
+        name: 'Volvo EX30',
+        battery: 69.0,
+        range: 476,
+        consumption: { eco: 13.0, normal: 15.5, sport: 18.0 },
+        motor: '200 kW / 268 hp',
+        fastCharge: '153 kW (10-80% in 26 min)',
+    },
+    'gac-aion-y-plus': {
+        name: 'GAC Aion Y Plus',
+        battery: 63.2,
+        range: 490,
+        consumption: { eco: 11.5, normal: 14.0, sport: 17.0 },
+        motor: '150 kW / 201 hp',
+        fastCharge: '80 kW (30-80% in 32 min)',
+    },
+    'chery-tiggo-8-pro-e': {
+        name: 'Chery Tiggo 8 Pro e+',
+        battery: 71.0,
+        range: 410,
+        consumption: { eco: 15.5, normal: 18.5, sport: 22.0 },
+        motor: '155 kW / 208 hp',
+        fastCharge: '80 kW (30-80% in 35 min)',
+    },
 };
+
+let selectedModel = 'byd-atto3';
 
 // Additional consumption factors
 const AC_PENALTY = 1.5;           // kWh/100km extra with A/C
@@ -243,19 +352,20 @@ async function tryCalculateRoute() {
 }
 
 function calculateEnergy(distanceKm, durationSec) {
+    const model = EV_MODELS[selectedModel];
     const style = drivingStyleSelect.value;
     const acOn = acToggle.checked;
     const passengers = parseInt(passengersSelect.value);
     const batteryPercent = parseInt(batterySlider.value);
 
     // Compute effective consumption
-    let consumption = CONSUMPTION_RATES[style];
+    let consumption = model.consumption[style];
     if (acOn) consumption += AC_PENALTY;
     if (passengers > 1) consumption += (passengers - 1) * PASSENGER_PENALTY;
 
     const energyNeeded = (distanceKm * consumption) / 100;
-    const availableEnergy = (batteryPercent / 100) * BATTERY_CAPACITY;
-    const batteryUsedPercent = (energyNeeded / BATTERY_CAPACITY) * 100;
+    const availableEnergy = (batteryPercent / 100) * model.battery;
+    const batteryUsedPercent = (energyNeeded / model.battery) * 100;
     const batteryRemainingPercent = batteryPercent - batteryUsedPercent;
 
     // Format duration
@@ -283,7 +393,7 @@ function calculateEnergy(distanceKm, durationSec) {
     // Warning
     const warning = document.getElementById('warning-message');
     if (batteryRemainingPercent < 0) {
-        const deficit = Math.abs(batteryRemainingPercent * BATTERY_CAPACITY / 100).toFixed(1);
+        const deficit = Math.abs(batteryRemainingPercent * model.battery / 100).toFixed(1);
         warning.textContent = `Insufficient battery! You need ${deficit} kWh more. Charge before this trip.`;
         warning.className = 'warning danger';
     } else if (batteryRemainingPercent < 15) {
@@ -357,6 +467,37 @@ swapBtn.addEventListener('click', () => {
 
     tryCalculateRoute();
 });
+
+// Model selector
+const modelSelect = document.getElementById('model-select');
+
+function updateModelDisplay() {
+    const model = EV_MODELS[selectedModel];
+
+    // Update title
+    document.getElementById('model-title').textContent = model.name;
+
+    // Update driving style labels with model-specific consumption
+    const options = drivingStyleSelect.options;
+    options[0].textContent = `Eco (${model.consumption.eco.toFixed(1)} kWh/100km)`;
+    options[1].textContent = `Normal (${model.consumption.normal.toFixed(1)} kWh/100km)`;
+    options[2].textContent = `Sport (${model.consumption.sport.toFixed(1)} kWh/100km)`;
+
+    // Update specs
+    document.getElementById('spec-battery').textContent = `${model.battery} kWh`;
+    document.getElementById('spec-range').textContent = `${model.range} km`;
+    document.getElementById('spec-motor').textContent = model.motor;
+    document.getElementById('spec-fastcharge').textContent = model.fastCharge;
+}
+
+modelSelect.addEventListener('change', () => {
+    selectedModel = modelSelect.value;
+    updateModelDisplay();
+    tryCalculateRoute();
+});
+
+// Initialize model display
+updateModelDisplay();
 
 // Recalculate on settings change
 drivingStyleSelect.addEventListener('change', tryCalculateRoute);

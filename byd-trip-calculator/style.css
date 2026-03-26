@@ -50,6 +50,47 @@ body {
     margin-top: 4px;
 }
 
+/* Model Selector */
+.model-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.model-section label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #999;
+}
+
+.model-section select {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.2s;
+}
+
+.model-section select:focus {
+    border-color: #2196f3;
+}
+
+.model-section select optgroup {
+    color: #888;
+    font-style: normal;
+}
+
+.model-section select option {
+    color: #fff;
+    background: #1a1a1a;
+}
+
 /* Input Section */
 .input-section {
     display: flex;
