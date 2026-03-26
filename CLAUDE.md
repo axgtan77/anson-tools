@@ -9,6 +9,7 @@ This is a personal working directory for kiosk and retail automation tools built
 1. **Price/Loyalty Checker Kiosk** (`price_loyalty_checker.py`) — Tkinter fullscreen kiosk app for barcode price lookup and loyalty card point balance display.
 2. **People Counter** (`people_count/people_counter.py`) — YOLO-based person detection and entry/exit counting via RTSP camera.
 3. **Data pipeline scripts** (`Documents/Python Scripts/`) — Utilities for converting FPB/DBF files from the POS system into CSVs consumed by the kiosk.
+4. **BYD Trip Calculator** (`byd-trip-calculator/`) — Leaflet.js web app for EV trip energy estimation, hosted on GitHub Pages.
 
 ## Running the Projects
 
@@ -286,3 +287,54 @@ All `.FPB` files are dBASE III/IV DBF format. Open with `dbfread` using `encodin
 | `MP_MER.FPB` | Merchandise master (55K+ products, pricing, barcodes) |
 | `WI_LGR.FPB` | Stock ledger — IN/OUT movements per branch |
 | `FE_T01–T12.FPB` | Monthly transaction files |
+
+---
+
+## BYD Trip Calculator (`byd-trip-calculator/`)
+
+An EV trip energy calculator web app hosted on GitHub Pages. Estimates energy consumption for trips plotted on an interactive map.
+
+**Live URL:** `https://axgtan77.github.io/anson-tools/`
+
+### Files
+- `byd-trip-calculator/index.html` — Main HTML with model selector, drive settings, results grid
+- `byd-trip-calculator/style.css` — Dark theme UI, responsive layout (sidebar stacks on mobile)
+- `byd-trip-calculator/app.js` — Map logic, routing, energy calculation, 21 EV models
+
+### Deployment
+The app is deployed via the `gh-pages` branch. Files in `byd-trip-calculator/` on the feature branch must be copied to the **root** of the `gh-pages` branch for GitHub Pages to serve them:
+```bash
+# Deploy workflow:
+git checkout gh-pages
+git show <feature-branch>:byd-trip-calculator/index.html > index.html
+git show <feature-branch>:byd-trip-calculator/style.css > style.css
+git show <feature-branch>:byd-trip-calculator/app.js > app.js
+git add index.html style.css app.js
+git commit -m "Deploy: <description>"
+git push -u origin gh-pages
+git checkout <feature-branch>
+```
+
+### Key Technical Details
+
+**Map & Routing:**
+- Leaflet.js with CartoDB Dark tiles (default), plus Voyager, Satellite (Esri), OSM layer options
+- OSRM (Open Source Routing Machine) for free route calculation — no API key needed
+- Nominatim for geocoding/search, limited to Philippines (`countrycodes=ph`)
+
+**Energy Calculation:**
+- Base consumption per model × distance + AC penalty (2.0 kWh/100km) + passenger penalty (0.3 kWh/100km per extra passenger beyond 1)
+- Calibrated from real-world data: BYD Atto 3, QC↔Paniqui Tarlac round trip (~320km), 4 passengers, AC on = 80% of 60.48 kWh battery → ~15.1 kWh/100km all-in, base ~12.5 kWh/100km
+
+**EV Models (21 total):**
+- BYD: Atto 3, Seal, Dolphin, Han
+- Tesla: Model 3 LR, Model 3 SR, Model Y LR
+- Hyundai/Kia: Ioniq 5 LR, EV6 LR
+- Geely/Zeekr: Emgrand EV, Galaxy E5, Zeekr 001 LR, Zeekr X
+- Xiaomi/Denza: SU7, SU7 Max, D9 EV
+- Others: MG4 LR, Nissan Leaf e+, Volvo EX30, GAC Aion Y Plus, Chery Tiggo 8 Pro e+
+
+**Known Issues / Gotchas:**
+- HTML structure is sensitive — the sidebar div nesting must be correct or the `#map` div gets swallowed and Leaflet can't render. Always verify `</div>` closings for `.settings-section`, `.results-section`, `.specs-section` before the `<div id="map">`.
+- When deploying, always copy ALL 3 files together (index.html, style.css, app.js) to avoid mismatched versions.
+- The `.gitignore` has `*` (ignore everything) — `byd-trip-calculator/` is explicitly excluded via `!byd-trip-calculator/` and `!byd-trip-calculator/**`.
