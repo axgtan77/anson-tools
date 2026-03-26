@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BYD Atto 3 Trip Calculator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div id="app">
+        <div id="sidebar">
+            <div class="logo-section">
+                <h1>BYD Atto 3</h1>
+                <p class="subtitle">Trip Energy Calculator</p>
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="origin-input">
+                        <span class="marker origin-marker">A</span> Origin
+                    </label>
+                    <div class="input-row">
+                        <input type="text" id="origin-input" placeholder="Search or click map..." />
+                        <button id="clear-origin" class="clear-btn" title="Clear">&times;</button>
+                    </div>
+                    <div id="origin-suggestions" class="suggestions"></div>
+                </div>
+
+                <div class="input-group">
+                    <label for="dest-input">
+                        <span class="marker dest-marker">B</span> Destination
+                    </label>
+                    <div class="input-row">
+                        <input type="text" id="dest-input" placeholder="Search or click map..." />
+                        <button id="clear-dest" class="clear-btn" title="Clear">&times;</button>
+                    </div>
+                    <div id="dest-suggestions" class="suggestions"></div>
+                </div>
+
+                <button id="swap-btn" title="Swap origin and destination">&#8645; Swap</button>
+            </div>
+
+            <div class="settings-section">
+                <h3>Drive Settings</h3>
+                <div class="setting-row">
+                    <label for="driving-style">Driving Style</label>
+                    <select id="driving-style">
+                        <option value="eco">Eco (14.0 kWh/100km)</option>
+                        <option value="normal" selected>Normal (16.5 kWh/100km)</option>
+                        <option value="sport">Sport (19.5 kWh/100km)</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="ac-toggle">Air Conditioning</label>
+                    <label class="switch">
+                        <input type="checkbox" id="ac-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="setting-row">
+                    <label for="passengers">Passengers</label>
+                    <select id="passengers">
+                        <option value="1">1</option>
+                        <option value="2" selected>2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="battery-level">Current Battery</label>
+                    <div class="battery-row">
+                        <input type="range" id="battery-level" min="5" max="100" value="100" />
+                        <span id="battery-value">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="results-section" class="results-section hidden">
+                <h3>Trip Estimate</h3>
+                <div class="result-grid">
+                    <div class="result-card">
+                        <span class="result-label">Distance</span>
+                        <span class="result-value" id="result-distance">--</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Est. Duration</span>
+                        <span class="result-value" id="result-duration">--</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Energy Needed</span>
+                        <span class="result-value" id="result-energy">--</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Consumption</span>
+                        <span class="result-value" id="result-consumption">--</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Battery Used</span>
+                        <span class="result-value" id="result-battery-used">--</span>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-label">Battery Remaining</span>
+                        <span class="result-value" id="result-battery-remaining">--</span>
+                    </div>
+                </div>
+                <div id="range-bar-container">
+                    <div class="range-bar">
+                        <div id="range-bar-used" class="range-bar-used"></div>
+                        <div id="range-bar-remaining" class="range-bar-remaining"></div>
+                    </div>
+                    <div class="range-labels">
+                        <span>0%</span>
+                        <span>50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                <div id="warning-message" class="warning hidden"></div>
+            </div>
+
+            <div class="specs-section">
+                <h3>BYD Atto 3 Specs</h3>
+                <div class="spec-row"><span>Battery Capacity</span><span>60.48 kWh</span></div>
+                <div class="spec-row"><span>WLTP Range</span><span>420 km</span></div>
+                <div class="spec-row"><span>Motor</span><span>150 kW / 201 hp</span></div>
+                <div class="spec-row"><span>DC Fast Charge</span><span>80 kW (30-80% in 29 min)</span></div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+    </div>
+
+    <div id="map-instructions" class="map-instructions">
+        Click the map to set <strong>Origin (A)</strong>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
