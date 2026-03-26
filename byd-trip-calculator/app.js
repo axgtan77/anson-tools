@@ -1,12 +1,14 @@
 // BYD Atto 3 Trip Calculator
 
-// EV model database: battery capacity (kWh) and consumption rates (kWh/100km) per driving style
+// EV model database: battery capacity (kWh) and real-world consumption rates (kWh/100km)
+// Calibrated for Philippine driving conditions (tropical heat, highway speeds, AC usage)
+// BYD Atto 3 baseline: ~30 kWh/100km real-world (QC to Paniqui Tarlac = ~160km using 80% battery)
 const EV_MODELS = {
     'byd-atto3': {
         name: 'BYD Atto 3',
         battery: 60.48,
         range: 420,
-        consumption: { eco: 14.0, normal: 16.5, sport: 19.5 },
+        consumption: { eco: 22.0, normal: 27.0, sport: 33.0 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 29 min)',
     },
@@ -14,7 +16,7 @@ const EV_MODELS = {
         name: 'BYD Seal',
         battery: 82.56,
         range: 570,
-        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        consumption: { eco: 21.0, normal: 26.0, sport: 31.0 },
         motor: '230 kW / 308 hp',
         fastCharge: '150 kW (30-80% in 26 min)',
     },
@@ -22,7 +24,7 @@ const EV_MODELS = {
         name: 'BYD Dolphin',
         battery: 60.48,
         range: 427,
-        consumption: { eco: 12.5, normal: 15.0, sport: 17.5 },
+        consumption: { eco: 19.5, normal: 24.0, sport: 29.0 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 29 min)',
     },
@@ -30,7 +32,7 @@ const EV_MODELS = {
         name: 'BYD Han',
         battery: 85.44,
         range: 521,
-        consumption: { eco: 15.0, normal: 17.5, sport: 21.0 },
+        consumption: { eco: 23.5, normal: 28.5, sport: 34.5 },
         motor: '380 kW / 510 hp (AWD)',
         fastCharge: '120 kW (30-80% in 28 min)',
     },
@@ -38,7 +40,7 @@ const EV_MODELS = {
         name: 'Tesla Model 3 Long Range',
         battery: 78.1,
         range: 629,
-        consumption: { eco: 12.0, normal: 14.5, sport: 17.5 },
+        consumption: { eco: 18.5, normal: 23.0, sport: 28.5 },
         motor: '366 kW / 491 hp (AWD)',
         fastCharge: '250 kW (30-80% in 22 min)',
     },
@@ -46,7 +48,7 @@ const EV_MODELS = {
         name: 'Tesla Model Y Long Range',
         battery: 78.1,
         range: 533,
-        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        consumption: { eco: 21.0, normal: 25.5, sport: 31.0 },
         motor: '378 kW / 507 hp (AWD)',
         fastCharge: '250 kW (30-80% in 25 min)',
     },
@@ -54,7 +56,7 @@ const EV_MODELS = {
         name: 'Tesla Model 3 Standard Range',
         battery: 60.0,
         range: 513,
-        consumption: { eco: 11.0, normal: 13.5, sport: 16.0 },
+        consumption: { eco: 17.0, normal: 21.5, sport: 26.0 },
         motor: '208 kW / 279 hp',
         fastCharge: '170 kW (30-80% in 20 min)',
     },
@@ -62,7 +64,7 @@ const EV_MODELS = {
         name: 'MG4 Long Range',
         battery: 64.0,
         range: 450,
-        consumption: { eco: 13.0, normal: 15.5, sport: 18.5 },
+        consumption: { eco: 20.0, normal: 25.0, sport: 30.0 },
         motor: '150 kW / 201 hp',
         fastCharge: '135 kW (30-80% in 26 min)',
     },
@@ -70,7 +72,7 @@ const EV_MODELS = {
         name: 'Hyundai Ioniq 5 Long Range',
         battery: 77.4,
         range: 507,
-        consumption: { eco: 14.0, normal: 16.5, sport: 19.5 },
+        consumption: { eco: 22.0, normal: 26.5, sport: 32.0 },
         motor: '225 kW / 302 hp',
         fastCharge: '240 kW (10-80% in 18 min)',
     },
@@ -78,7 +80,7 @@ const EV_MODELS = {
         name: 'Kia EV6 Long Range',
         battery: 77.4,
         range: 528,
-        consumption: { eco: 13.5, normal: 16.0, sport: 19.0 },
+        consumption: { eco: 21.0, normal: 25.5, sport: 31.0 },
         motor: '229 kW / 307 hp',
         fastCharge: '240 kW (10-80% in 18 min)',
     },
@@ -86,7 +88,7 @@ const EV_MODELS = {
         name: 'Nissan Leaf e+',
         battery: 62.0,
         range: 385,
-        consumption: { eco: 14.5, normal: 17.0, sport: 20.0 },
+        consumption: { eco: 22.5, normal: 27.5, sport: 33.0 },
         motor: '160 kW / 214 hp',
         fastCharge: '46 kW (30-80% in 45 min)',
     },
@@ -94,7 +96,7 @@ const EV_MODELS = {
         name: 'Volvo EX30',
         battery: 69.0,
         range: 476,
-        consumption: { eco: 13.0, normal: 15.5, sport: 18.0 },
+        consumption: { eco: 20.0, normal: 25.0, sport: 29.5 },
         motor: '200 kW / 268 hp',
         fastCharge: '153 kW (10-80% in 26 min)',
     },
@@ -102,7 +104,7 @@ const EV_MODELS = {
         name: 'GAC Aion Y Plus',
         battery: 63.2,
         range: 490,
-        consumption: { eco: 11.5, normal: 14.0, sport: 17.0 },
+        consumption: { eco: 18.0, normal: 22.5, sport: 27.5 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 32 min)',
     },
@@ -110,7 +112,7 @@ const EV_MODELS = {
         name: 'Chery Tiggo 8 Pro e+',
         battery: 71.0,
         range: 410,
-        consumption: { eco: 15.5, normal: 18.5, sport: 22.0 },
+        consumption: { eco: 24.0, normal: 30.0, sport: 36.0 },
         motor: '155 kW / 208 hp',
         fastCharge: '80 kW (30-80% in 35 min)',
     },
@@ -119,7 +121,7 @@ const EV_MODELS = {
 let selectedModel = 'byd-atto3';
 
 // Additional consumption factors
-const AC_PENALTY = 1.5;           // kWh/100km extra with A/C
+const AC_PENALTY = 3.0;           // kWh/100km extra with A/C (tropical climate)
 const PASSENGER_PENALTY = 0.3;    // kWh/100km per extra passenger beyond 1
 
 // State
