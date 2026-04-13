@@ -4,3 +4,5 @@
 # Explicitly track only what we want
 !CLAUDE.md
 !.gitignore
+!.claude/
+!.claude/**

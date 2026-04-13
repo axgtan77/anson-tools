@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(tailscale:*)",
+      "Bash(sudo tailscale:*)",
+      "Bash(sudo tailscaled:*)",
+      "Bash(sudo tailscale up:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/setup-tailscale.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
