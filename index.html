@@ -1,181 +1,98 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EV Trip Calculator</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EV Tools</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --surface: #181b22;
+      --border: #2a2f3a;
+      --text: #e8eaed;
+      --text-dim: #9aa0a6;
+      --accent: #4cc38a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    main {
+      max-width: 640px;
+      width: 100%;
+    }
+    h1 {
+      font-size: 2rem;
+      margin: 0 0 8px 0;
+    }
+    p.lead {
+      color: var(--text-dim);
+      margin: 0 0 28px 0;
+    }
+    .tile-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 600px) {
+      .tile-grid { grid-template-columns: 1fr 1fr; }
+    }
+    a.tile {
+      display: block;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    a.tile:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    a.tile h2 {
+      margin: 0 0 6px 0;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+    a.tile p {
+      margin: 0;
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    footer {
+      margin-top: 32px;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
-    <div id="app">
-        <div id="sidebar">
-            <div class="logo-section">
-                <h1 id="model-title">BYD Atto 3</h1>
-                <p class="subtitle">Trip Energy Calculator</p>
-            </div>
-
-            <div class="model-section">
-                <label for="model-select">Vehicle</label>
-                <select id="model-select">
-                    <optgroup label="BYD">
-                        <option value="byd-atto3" selected>BYD Atto 3</option>
-                        <option value="byd-dolphin">BYD Dolphin</option>
-                        <option value="byd-seal">BYD Seal</option>
-                        <option value="byd-han">BYD Han</option>
-                    </optgroup>
-                    <optgroup label="Tesla">
-                        <option value="tesla-model3-sr">Tesla Model 3 Standard Range</option>
-                        <option value="tesla-model3-lr">Tesla Model 3 Long Range</option>
-                        <option value="tesla-modely-lr">Tesla Model Y Long Range</option>
-                    </optgroup>
-                    <optgroup label="Hyundai / Kia">
-                        <option value="hyundai-ioniq5-lr">Hyundai Ioniq 5 Long Range</option>
-                        <option value="kia-ev6-lr">Kia EV6 Long Range</option>
-                    </optgroup>
-                    <optgroup label="Geely / Zeekr">
-                        <option value="geely-emgrand-ev">Geely Emgrand EV</option>
-                        <option value="geely-galaxy-e5">Geely Galaxy E5</option>
-                        <option value="zeekr-001-lr">Zeekr 001 Long Range</option>
-                        <option value="zeekr-x">Zeekr X</option>
-                    </optgroup>
-                    <optgroup label="Xiaomi / Denza">
-                        <option value="xiaomi-su7">Xiaomi SU7</option>
-                        <option value="xiaomi-su7-max">Xiaomi SU7 Max</option>
-                        <option value="denza-d9-ev">Denza D9 EV</option>
-                    </optgroup>
-                    <optgroup label="Others">
-                        <option value="mg4-lr">MG4 Long Range</option>
-                        <option value="nissan-leaf-eplus">Nissan Leaf e+</option>
-                        <option value="volvo-ex30">Volvo EX30</option>
-                        <option value="gac-aion-y-plus">GAC Aion Y Plus</option>
-                        <option value="chery-tiggo-8-pro-e">Chery Tiggo 8 Pro e+</option>
-                    </optgroup>
-                </select>
-            </div>
-
-            <div class="input-section">
-                <div class="input-group">
-                    <label for="origin-input">
-                        <span class="marker origin-marker">A</span> Origin
-                    </label>
-                    <div class="input-row">
-                        <input type="text" id="origin-input" placeholder="Search or click map..." />
-                        <button id="clear-origin" class="clear-btn" title="Clear">&times;</button>
-                    </div>
-                    <div id="origin-suggestions" class="suggestions"></div>
-                </div>
-
-                <div class="input-group">
-                    <label for="dest-input">
-                        <span class="marker dest-marker">B</span> Destination
-                    </label>
-                    <div class="input-row">
-                        <input type="text" id="dest-input" placeholder="Search or click map..." />
-                        <button id="clear-dest" class="clear-btn" title="Clear">&times;</button>
-                    </div>
-                    <div id="dest-suggestions" class="suggestions"></div>
-                </div>
-
-                <button id="swap-btn" title="Swap origin and destination">&#8645; Swap</button>
-            </div>
-
-            <div class="settings-section">
-                <h3>Drive Settings</h3>
-                <div class="setting-row">
-                    <label for="driving-style">Driving Style</label>
-                    <select id="driving-style">
-                        <option value="eco">Eco (14.0 kWh/100km)</option>
-                        <option value="normal" selected>Normal (16.5 kWh/100km)</option>
-                        <option value="sport">Sport (19.5 kWh/100km)</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label for="ac-toggle">Air Conditioning</label>
-                    <label class="switch">
-                        <input type="checkbox" id="ac-toggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                <div class="setting-row">
-                    <label for="passengers">Passengers</label>
-                    <select id="passengers">
-                        <option value="1">1</option>
-                        <option value="2" selected>2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                    </select>
-                </div>
-                <div class="setting-row">
-                    <label for="battery-level">Current Battery</label>
-                    <div class="battery-row">
-                        <input type="range" id="battery-level" min="5" max="100" value="100" />
-                        <span id="battery-value">100%</span>
-                    </div>
-                </div>
-                <button id="recompute-btn">Recompute</button>
-            </div>
-
-            <div id="results-section" class="results-section hidden">
-                <h3>Trip Estimate</h3>
-                <div class="result-grid">
-                    <div class="result-card">
-                        <span class="result-label">Distance</span>
-                        <span class="result-value" id="result-distance">--</span>
-                    </div>
-                    <div class="result-card">
-                        <span class="result-label">Est. Duration</span>
-                        <span class="result-value" id="result-duration">--</span>
-                    </div>
-                    <div class="result-card">
-                        <span class="result-label">Energy Needed</span>
-                        <span class="result-value" id="result-energy">--</span>
-                    </div>
-                    <div class="result-card">
-                        <span class="result-label">Consumption</span>
-                        <span class="result-value" id="result-consumption">--</span>
-                    </div>
-                    <div class="result-card">
-                        <span class="result-label">Battery Used</span>
-                        <span class="result-value" id="result-battery-used">--</span>
-                    </div>
-                    <div class="result-card">
-                        <span class="result-label">Battery Remaining</span>
-                        <span class="result-value" id="result-battery-remaining">--</span>
-                    </div>
-                </div>
-                <div id="range-bar-container">
-                    <div class="range-bar">
-                        <div id="range-bar-used" class="range-bar-used"></div>
-                        <div id="range-bar-remaining" class="range-bar-remaining"></div>
-                    </div>
-                    <div class="range-labels">
-                        <span>0%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                    </div>
-                </div>
-                <div id="warning-message" class="warning hidden"></div>
-            </div>
-
-            <div class="specs-section">
-                <h3>Vehicle Specs</h3>
-                <div class="spec-row"><span>Battery Capacity</span><span id="spec-battery">60.48 kWh</span></div>
-                <div class="spec-row"><span>WLTP Range</span><span id="spec-range">420 km</span></div>
-                <div class="spec-row"><span>Motor</span><span id="spec-motor">150 kW / 201 hp</span></div>
-                <div class="spec-row"><span>DC Fast Charge</span><span id="spec-fastcharge">80 kW (30-80% in 29 min)</span></div>
-            </div>
-        </div>
-
-        <div id="map"></div>
+  <main>
+    <h1>EV Tools</h1>
+    <p class="lead">Small utilities for managing my BYD Atto 3 and future EVs.</p>
+    <div class="tile-grid">
+      <a class="tile" href="byd-trip-calculator/index.html">
+        <h2>Trip Calculator →</h2>
+        <p>Plot a route on the map and estimate how much battery a trip will use, per EV model.</p>
+      </a>
+      <a class="tile" href="charging-log/index.html">
+        <h2>Charging Log →</h2>
+        <p>Record every charge session with cost, duration, and efficiency. Data stays in your browser.</p>
+      </a>
     </div>
-
-    <div id="map-instructions" class="map-instructions">
-        Click the map to set <strong>Origin (A)</strong>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="app.js"></script>
+    <footer>Made for Anson · local-first · open source</footer>
+  </main>
 </body>
 </html>
