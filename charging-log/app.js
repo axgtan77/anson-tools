@@ -184,16 +184,24 @@ function renderStats() {
 
 function renderHistory() {
   const tbody = $("#history-table tbody");
+  const cardsEl = $("#history-cards");
   const rows = enrich(state.charging).slice().reverse();
   tbody.innerHTML = "";
+  cardsEl.innerHTML = "";
+
+  if (rows.length === 0) {
+    cardsEl.innerHTML = `<p style="color:var(--text-dim);text-align:center;padding:20px">No entries yet. Add one in the <strong>Log</strong> tab, or tap <strong>Load Seed</strong> above.</p>`;
+  }
+
   rows.forEach((e) => {
-    const tr = document.createElement("tr");
     const startEnd =
       e.start_pct != null && e.actual_final_pct != null
         ? `${Math.round(e.start_pct * 100)}→${Math.round(e.actual_final_pct * 100)}%`
         : e.start_pct != null
         ? `${Math.round(e.start_pct * 100)}%`
         : "";
+
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${formatDate(e.date)}</td>
       <td>${e.vehicle || ""}</td>
@@ -212,6 +220,31 @@ function renderHistory() {
         <button class="danger" data-action="del" data-id="${e.id}">✕</button>
       </td>`;
     tbody.appendChild(tr);
+
+    const card = document.createElement("div");
+    card.className = "entry";
+    card.innerHTML = `
+      <div class="entry-top">
+        <span class="entry-date">${formatDate(e.date)}</span>
+        <span class="entry-badge">${e.vehicle || ""}${e.location ? " · " + e.location : ""}</span>
+      </div>
+      <div class="entry-row">
+        <div><div class="k">Charge</div><div class="v">${startEnd || "—"}</div></div>
+        <div><div class="k">kWh</div><div class="v">${num(e.actual_kwh, 2) || "—"}</div></div>
+        <div><div class="k">Cost</div><div class="v">${e.cost_php != null ? "₱" + num(e.cost_php, 0) : "—"}</div></div>
+        <div><div class="k">Duration</div><div class="v">${formatHours(e.actual_hours) || "—"}</div></div>
+        <div><div class="k">Rate</div><div class="v">${e.actual_kw ? num(e.actual_kw, 1) + " kW" : "—"}</div></div>
+        <div><div class="k">km/kWh</div><div class="v">${num(e.km_per_kwh, 2) || "—"}</div></div>
+        <div><div class="k">ODO</div><div class="v">${e.odo ?? "—"}</div></div>
+        <div><div class="k">km since</div><div class="v">${e.km_since_last ?? "—"}</div></div>
+        <div><div class="k">Days</div><div class="v">${e.days_since_last ?? "—"}</div></div>
+      </div>
+      ${e.notes ? `<div class="entry-notes">${e.notes}</div>` : ""}
+      <div class="entry-actions">
+        <button class="ghost" data-action="edit" data-id="${e.id}">✎ Edit</button>
+        <button class="danger" data-action="del" data-id="${e.id}">✕ Delete</button>
+      </div>`;
+    cardsEl.appendChild(card);
   });
 }
 
@@ -313,6 +346,7 @@ function resetForm() {
 function handleSubmit(e) {
   e.preventDefault();
   const entry = readForm();
+  const wasEditing = !!state.editId;
   if (state.editId) {
     const idx = state.charging.findIndex((x) => x.id === state.editId);
     if (idx >= 0) state.charging[idx] = entry;
@@ -322,6 +356,7 @@ function handleSubmit(e) {
   save();
   resetForm();
   render();
+  if (!wasEditing) switchTab("history");
 }
 
 function handleTableClick(e) {
@@ -340,9 +375,19 @@ function handleTableClick(e) {
       state.editId = id;
       fillForm(entry);
       $("#cancel-edit").hidden = false;
-      $("#charge-form").scrollIntoView({ behavior: "smooth", block: "start" });
+      switchTab("log");
     }
   }
+}
+
+function switchTab(name) {
+  $$(".tab").forEach((t) =>
+    t.classList.toggle("active", t.dataset.tab === name),
+  );
+  $$(".tab-panel").forEach((p) =>
+    p.classList.toggle("active", p.dataset.panel === name),
+  );
+  window.scrollTo({ top: 0 });
 }
 
 function handleVehicleSubmit(e) {
@@ -448,6 +493,11 @@ function init() {
   $("#charge-form").addEventListener("submit", handleSubmit);
   $("#cancel-edit").addEventListener("click", resetForm);
   $("#history-table").addEventListener("click", handleTableClick);
+  $("#history-cards").addEventListener("click", handleTableClick);
+  $("#tabs").addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (tab) switchTab(tab.dataset.tab);
+  });
   $("#vehicle-form").addEventListener("submit", handleVehicleSubmit);
   $("#vehicle-list").addEventListener("click", handleVehicleListClick);
   $("#export-btn").addEventListener("click", exportJSON);
