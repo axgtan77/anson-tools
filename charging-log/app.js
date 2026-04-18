@@ -115,6 +115,45 @@ function vehicleBattery(model) {
   return v && v.battery_kwh ? v.battery_kwh : null;
 }
 
+function getLastOdo(model, excludeId) {
+  const candidates = state.charging
+    .filter((e) => e.vehicle === model && e.odo != null && e.id !== excludeId)
+    .sort((a, b) => {
+      const da = new Date(a.time_start || a.date);
+      const db = new Date(b.time_start || b.date);
+      if (da - db !== 0) return db - da;
+      return (b.odo || 0) - (a.odo || 0);
+    });
+  return candidates[0] || null;
+}
+
+function updateOdoHint() {
+  const hint = $("#odo-hint");
+  if (!hint) return;
+  const f = $("#charge-form");
+  const model = f.vehicle.value;
+  const last = getLastOdo(model, state.editId);
+  if (!last) {
+    hint.textContent = "No previous ODO logged for this vehicle.";
+    hint.className = "hint";
+    return;
+  }
+  const dateStr = formatDate(last.date);
+  const cur = parseFloat(f.odo.value);
+  let text = `Last: ${last.odo} km on ${dateStr}`;
+  let cls = "hint";
+  if (!isNaN(cur)) {
+    if (cur < last.odo) {
+      text += ` — current is ${last.odo - cur} km LESS than last`;
+      cls = "hint error";
+    } else if (cur > last.odo) {
+      text += ` — +${cur - last.odo} km since`;
+    }
+  }
+  hint.textContent = text;
+  hint.className = cls;
+}
+
 function renderVehicles() {
   const list = $("#vehicle-list");
   list.innerHTML = "";
@@ -334,6 +373,7 @@ function fillForm(entry) {
   f.cost_php.value = entry.cost_php ?? "";
   f.location.value = entry.location || "";
   f.notes.value = entry.notes || "";
+  updateOdoHint();
 }
 
 function resetForm() {
@@ -341,6 +381,7 @@ function resetForm() {
   $("#charge-form").date.valueAsDate = new Date();
   state.editId = null;
   $("#cancel-edit").hidden = true;
+  updateOdoHint();
 }
 
 function handleSubmit(e) {
@@ -498,6 +539,8 @@ function init() {
     const tab = e.target.closest(".tab");
     if (tab) switchTab(tab.dataset.tab);
   });
+  $("#charge-form").vehicle.addEventListener("change", updateOdoHint);
+  $("#charge-form").odo.addEventListener("input", updateOdoHint);
   $("#vehicle-form").addEventListener("submit", handleVehicleSubmit);
   $("#vehicle-list").addEventListener("click", handleVehicleListClick);
   $("#export-btn").addEventListener("click", exportJSON);
