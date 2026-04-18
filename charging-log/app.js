@@ -342,8 +342,131 @@ function render() {
   renderVehicles();
   renderStats();
   renderHistory();
+  renderCharts();
   updateOdoHint();
   updateEndHint();
+}
+
+const chartRefs = {};
+
+function monthKey(iso) {
+  if (!iso) return null;
+  return iso.slice(0, 7);
+}
+
+function groupMonthly(entries, valueFn) {
+  const map = new Map();
+  entries.forEach((e) => {
+    const k = monthKey(e.date);
+    if (!k) return;
+    const v = valueFn(e);
+    if (v == null || isNaN(v)) return;
+    map.set(k, (map.get(k) || 0) + v);
+  });
+  return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function renderCharts() {
+  if (typeof Chart === "undefined") return;
+  const data = enrich(state.charging);
+  const palette = {
+    accent: "#4cc38a",
+    accentDim: "rgba(76, 195, 138, 0.35)",
+    warn: "#e0b04c",
+    warnDim: "rgba(224, 176, 76, 0.35)",
+    text: "#9aa0a6",
+    grid: "#2a2f3a",
+  };
+  Chart.defaults.color = palette.text;
+  Chart.defaults.borderColor = palette.grid;
+  Chart.defaults.font.family =
+    '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+
+  // Cost per month
+  const costByMonth = groupMonthly(data, (e) => e.cost_php);
+  upsertChart("chart-cost", "bar", {
+    labels: costByMonth.map(([k]) => k),
+    datasets: [{
+      label: "₱",
+      data: costByMonth.map(([, v]) => Math.round(v)),
+      backgroundColor: palette.accentDim,
+      borderColor: palette.accent,
+      borderWidth: 1,
+    }],
+  });
+
+  // kWh per month
+  const kwhByMonth = groupMonthly(data, (e) => e.actual_kwh);
+  upsertChart("chart-kwh", "bar", {
+    labels: kwhByMonth.map(([k]) => k),
+    datasets: [{
+      label: "kWh",
+      data: kwhByMonth.map(([, v]) => +v.toFixed(1)),
+      backgroundColor: palette.warnDim,
+      borderColor: palette.warn,
+      borderWidth: 1,
+    }],
+  });
+
+  // Efficiency trend (per-session km/kWh)
+  const effRows = data
+    .filter((e) => e.km_per_kwh > 0)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+  upsertChart("chart-eff", "line", {
+    labels: effRows.map((e) => formatDate(e.date)),
+    datasets: [{
+      label: "km/kWh",
+      data: effRows.map((e) => +e.km_per_kwh.toFixed(2)),
+      borderColor: palette.accent,
+      backgroundColor: palette.accentDim,
+      tension: 0.3,
+      pointRadius: 3,
+      fill: true,
+    }],
+  });
+
+  // Cost by location
+  const locMap = new Map();
+  data.forEach((e) => {
+    if (!e.location || e.cost_php == null) return;
+    locMap.set(e.location, (locMap.get(e.location) || 0) + e.cost_php);
+  });
+  const locEntries = [...locMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  upsertChart("chart-loc", "bar", {
+    labels: locEntries.map(([k]) => k),
+    datasets: [{
+      label: "₱",
+      data: locEntries.map(([, v]) => Math.round(v)),
+      backgroundColor: palette.accentDim,
+      borderColor: palette.accent,
+      borderWidth: 1,
+    }],
+  }, { indexAxis: "y" });
+}
+
+function upsertChart(canvasId, type, data, extraOpts = {}) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  if (chartRefs[canvasId]) {
+    chartRefs[canvasId].data = data;
+    Object.assign(chartRefs[canvasId].options, extraOpts);
+    chartRefs[canvasId].update();
+    return;
+  }
+  chartRefs[canvasId] = new Chart(canvas, {
+    type,
+    data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: "rgba(255,255,255,0.06)" } },
+        y: { grid: { color: "rgba(255,255,255,0.06)" }, beginAtZero: true },
+      },
+      ...extraOpts,
+    },
+  });
 }
 
 function combineDateTime(dateStr, timeStr, startTimeStr) {
@@ -452,6 +575,24 @@ function resetForm() {
   state.editId = null;
   $("#cancel-edit").hidden = true;
   updateOdoHint();
+}
+
+function duplicateLast() {
+  if (state.charging.length === 0) {
+    alert("No previous entries to copy from.");
+    return;
+  }
+  const sorted = [...state.charging].sort(
+    (a, b) => new Date(b.time_start || b.date) - new Date(a.time_start || a.date),
+  );
+  const last = sorted[0];
+  resetForm();
+  const f = $("#charge-form");
+  f.vehicle.value = last.vehicle || "";
+  f.location.value = last.location || "";
+  setChargerValue(last.charger);
+  updateOdoHint();
+  f.odo.focus();
 }
 
 function handleSubmit(e) {
@@ -603,6 +744,7 @@ function init() {
 
   $("#charge-form").addEventListener("submit", handleSubmit);
   $("#cancel-edit").addEventListener("click", resetForm);
+  $("#duplicate-last").addEventListener("click", duplicateLast);
   $("#history-table").addEventListener("click", handleTableClick);
   $("#history-cards").addEventListener("click", handleTableClick);
   $("#tabs").addEventListener("click", (e) => {
@@ -635,3 +777,11 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((err) => {
+      console.warn("Service worker registration failed:", err);
+    });
+  });
+}
