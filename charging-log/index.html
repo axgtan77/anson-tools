@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EV Charging Log</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#181b22" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Charging Log" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -90,6 +97,7 @@
         </div>
         <div class="actions">
           <button type="submit" class="primary">Save Entry</button>
+          <button type="button" id="duplicate-last" class="ghost">⎘ Copy last</button>
           <button type="button" id="cancel-edit" class="ghost" hidden>Cancel Edit</button>
         </div>
       </form>
@@ -136,6 +144,24 @@
     <section class="card stats-card tab-panel" data-panel="stats">
       <h2>Stats</h2>
       <div id="stats" class="stats-grid"></div>
+      <div class="charts">
+        <div class="chart-box">
+          <h3>Cost per month (₱)</h3>
+          <canvas id="chart-cost"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>kWh per month</h3>
+          <canvas id="chart-kwh"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Efficiency trend (km/kWh)</h3>
+          <canvas id="chart-eff"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Cost breakdown by location (₱)</h3>
+          <canvas id="chart-loc"></canvas>
+        </div>
+      </div>
     </section>
 
     <section class="card vehicles-card tab-panel" data-panel="vehicles">
@@ -161,6 +187,7 @@
     </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

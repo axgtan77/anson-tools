@@ -384,6 +384,33 @@ tbody tr:hover { background: var(--surface-2); }
   min-height: 0;
 }
 
+.charts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (min-width: 640px) {
+  .charts { grid-template-columns: 1fr 1fr; }
+}
+.chart-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.chart-box h3 {
+  margin: 0 0 8px 0;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.chart-box canvas {
+  max-width: 100%;
+  max-height: 220px;
+}
+
 .hint {
   color: var(--text-dim);
   font-size: 0.72rem;
