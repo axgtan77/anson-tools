@@ -158,6 +158,26 @@ function getLastOdo(model, excludeId) {
   return candidates[0] || null;
 }
 
+function updateEndHint() {
+  const el = $("#end-hint");
+  if (!el) return;
+  const f = $("#charge-form");
+  const s = f.time_start.value;
+  const e = f.actual_end.value;
+  if (!s || !e) {
+    el.textContent = "";
+    return;
+  }
+  const [sh, sm] = s.split(":").map(Number);
+  const [eh, em] = e.split(":").map(Number);
+  if (eh * 60 + em < sh * 60 + sm) {
+    el.textContent = "→ next day";
+    el.className = "hint warn";
+  } else {
+    el.textContent = "";
+  }
+}
+
 function updateOdoHint() {
   const hint = $("#odo-hint");
   if (!hint) return;
@@ -323,6 +343,7 @@ function render() {
   renderStats();
   renderHistory();
   updateOdoHint();
+  updateEndHint();
 }
 
 function combineDateTime(dateStr, timeStr, startTimeStr) {
@@ -590,6 +611,8 @@ function init() {
   });
   $("#charge-form").vehicle.addEventListener("change", updateOdoHint);
   $("#charge-form").odo.addEventListener("input", updateOdoHint);
+  $("#charge-form").time_start.addEventListener("input", updateEndHint);
+  $("#charge-form").actual_end.addEventListener("input", updateEndHint);
   $("#charger-preset").addEventListener("change", (e) => {
     const custom = $("#charger-custom");
     if (e.target.value === "__other__") {
