@@ -161,6 +161,28 @@ select {
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  display: block;
+}
+select {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  padding-right: 32px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path fill='%239aa0a6' d='M1 1l5 6 5-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+}
+input[type="date"],
+input[type="datetime-local"] {
+  padding-right: 8px;
+}
+input[type="datetime-local"] {
+  font-size: 14px;
 }
 input:focus, select:focus {
   outline: 2px solid var(--accent);
@@ -376,4 +398,18 @@ details[open] summary { margin-bottom: 10px; }
     font-size: 0.78rem;
     min-height: 36px;
   }
+  input[type="text"],
+  input[type="number"],
+  input[type="date"],
+  input[type="datetime-local"],
+  select {
+    padding: 8px 10px;
+    font-size: 15px;
+  }
+  select { padding-right: 26px; }
+  input[type="datetime-local"] { font-size: 13px; padding: 8px 6px; }
+}
+
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; gap: 8px; }
 }
