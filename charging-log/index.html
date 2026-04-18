@@ -50,7 +50,27 @@
             <input type="number" step="1" min="0" max="100" name="actual_final_pct" />
           </label>
           <label>Charger (kW)
-            <input type="text" name="charger" placeholder="6.1 Kw" />
+            <select name="charger_preset" id="charger-preset">
+              <optgroup label="AC Home / Destination">
+                <option value="1.9 Kw">1.9 kW — Level 1 portable</option>
+                <option value="3.3 Kw">3.3 kW — Slow AC</option>
+                <option value="6.1 Kw" selected>6.1 kW — Home wall (typical)</option>
+                <option value="7.0 Kw">7.0 kW — Level 2 AC</option>
+                <option value="11 Kw">11 kW — 3-phase AC</option>
+                <option value="22 Kw">22 kW — 3-phase AC</option>
+              </optgroup>
+              <optgroup label="DC Fast">
+                <option value="24 Kw">24 kW — DC slow</option>
+                <option value="50 Kw">50 kW — DC fast</option>
+                <option value="60 Kw">60 kW — DC fast</option>
+                <option value="120 Kw">120 kW — DC ultra</option>
+                <option value="150 Kw">150 kW — DC ultra</option>
+                <option value="180 Kw">180 kW — DC ultra</option>
+                <option value="250 Kw">250 kW — DC ultra</option>
+              </optgroup>
+              <option value="__other__">Other / custom…</option>
+            </select>
+            <input type="text" name="charger" id="charger-custom" placeholder="e.g. 8.5 Kw" hidden />
           </label>
 
           <label>Start time
