@@ -99,6 +99,7 @@ a:hover { text-decoration: underline; }
   border-radius: var(--radius);
   padding: 14px;
   box-shadow: var(--shadow);
+  overflow: hidden;
 }
 .card h2 {
   margin: 0 0 12px 0;
@@ -132,6 +133,7 @@ a:hover { text-decoration: underline; }
   font-size: 0.8rem;
   color: var(--text-dim);
   gap: 4px;
+  min-width: 0;
 }
 .grid label.full { grid-column: 1 / -1; }
 
@@ -139,7 +141,7 @@ a:hover { text-decoration: underline; }
   .grid { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 }
 
-input, select, button {
+input, select, button, textarea {
   font: inherit;
   color: var(--text);
 }
@@ -156,6 +158,9 @@ select {
   color: var(--text);
   font-size: 16px;
   min-height: 44px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 input:focus, select:focus {
   outline: 2px solid var(--accent);
