@@ -42,6 +42,37 @@ function parseChargerKw(s) {
   return m ? parseFloat(m[1]) : null;
 }
 
+function getChargerValue() {
+  const preset = $("#charger-preset");
+  if (preset.value === "__other__") {
+    return $("#charger-custom").value.trim() || null;
+  }
+  return preset.value || null;
+}
+
+function setChargerValue(value) {
+  const preset = $("#charger-preset");
+  const custom = $("#charger-custom");
+  if (!value) {
+    preset.value = "6.1 Kw";
+    custom.hidden = true;
+    custom.value = "";
+    return;
+  }
+  const match = [...preset.options].find(
+    (o) => o.value !== "__other__" && o.value === value,
+  );
+  if (match) {
+    preset.value = value;
+    custom.hidden = true;
+    custom.value = "";
+  } else {
+    preset.value = "__other__";
+    custom.hidden = false;
+    custom.value = value;
+  }
+}
+
 function formatDate(iso) {
   if (!iso) return "";
   return iso.slice(0, 10);
@@ -324,7 +355,7 @@ function readForm() {
     start_pct: start,
     target_pct: target,
     needed_pct: target != null && start != null ? +(target - start).toFixed(4) : null,
-    charger: get("charger"),
+    charger: getChargerValue(),
     time_start: get("time_start") ? new Date(get("time_start")).toISOString() : null,
     actual_end: get("actual_end") ? new Date(get("actual_end")).toISOString() : null,
     actual_final_pct: final,
@@ -367,7 +398,7 @@ function fillForm(entry) {
   f.target_pct.value = entry.target_pct != null ? Math.round(entry.target_pct * 100) : "";
   f.actual_final_pct.value =
     entry.actual_final_pct != null ? Math.round(entry.actual_final_pct * 100) : "";
-  f.charger.value = entry.charger || "";
+  setChargerValue(entry.charger);
   f.time_start.value = toDatetimeInput(entry.time_start);
   f.actual_end.value = toDatetimeInput(entry.actual_end);
   f.cost_php.value = entry.cost_php ?? "";
@@ -379,6 +410,7 @@ function fillForm(entry) {
 function resetForm() {
   $("#charge-form").reset();
   $("#charge-form").date.valueAsDate = new Date();
+  setChargerValue(null);
   state.editId = null;
   $("#cancel-edit").hidden = true;
   updateOdoHint();
@@ -541,6 +573,16 @@ function init() {
   });
   $("#charge-form").vehicle.addEventListener("change", updateOdoHint);
   $("#charge-form").odo.addEventListener("input", updateOdoHint);
+  $("#charger-preset").addEventListener("change", (e) => {
+    const custom = $("#charger-custom");
+    if (e.target.value === "__other__") {
+      custom.hidden = false;
+      custom.focus();
+    } else {
+      custom.hidden = true;
+      custom.value = "";
+    }
+  });
   $("#vehicle-form").addEventListener("submit", handleVehicleSubmit);
   $("#vehicle-list").addEventListener("click", handleVehicleListClick);
   $("#export-btn").addEventListener("click", exportJSON);
