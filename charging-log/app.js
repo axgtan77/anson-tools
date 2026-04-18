@@ -325,6 +325,22 @@ function render() {
   updateOdoHint();
 }
 
+function combineDateTime(dateStr, timeStr, startTimeStr) {
+  if (!dateStr || !timeStr) return null;
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const dt = new Date(y, m - 1, d, hh, mm, 0, 0);
+  if (startTimeStr) {
+    const [sh, sm] = startTimeStr.split(":").map(Number);
+    const startMinutes = sh * 60 + sm;
+    const endMinutes = hh * 60 + mm;
+    if (endMinutes < startMinutes) {
+      dt.setDate(dt.getDate() + 1);
+    }
+  }
+  return dt.toISOString();
+}
+
 function normalizePct(v) {
   if (v == null || v === "") return null;
   const n = parseFloat(v);
@@ -357,8 +373,8 @@ function readForm() {
     target_pct: target,
     needed_pct: target != null && start != null ? +(target - start).toFixed(4) : null,
     charger: getChargerValue(),
-    time_start: get("time_start") ? new Date(get("time_start")).toISOString() : null,
-    actual_end: get("actual_end") ? new Date(get("actual_end")).toISOString() : null,
+    time_start: combineDateTime(get("date"), get("time_start")),
+    actual_end: combineDateTime(get("date"), get("actual_end"), get("time_start")),
     actual_final_pct: final,
     actual_charged_pct:
       final != null && start != null ? +(final - start).toFixed(4) : null,
@@ -386,11 +402,11 @@ function readForm() {
 function fillForm(entry) {
   const f = $("#charge-form");
   const toDateInput = (iso) => (iso ? iso.slice(0, 10) : "");
-  const toDatetimeInput = (iso) => {
+  const toTimeInput = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
   f.date.value = toDateInput(entry.date);
   f.vehicle.value = entry.vehicle || "";
@@ -400,8 +416,8 @@ function fillForm(entry) {
   f.actual_final_pct.value =
     entry.actual_final_pct != null ? Math.round(entry.actual_final_pct * 100) : "";
   setChargerValue(entry.charger);
-  f.time_start.value = toDatetimeInput(entry.time_start);
-  f.actual_end.value = toDatetimeInput(entry.actual_end);
+  f.time_start.value = toTimeInput(entry.time_start);
+  f.actual_end.value = toTimeInput(entry.actual_end);
   f.cost_php.value = entry.cost_php ?? "";
   f.location.value = entry.location || "";
   f.notes.value = entry.notes || "";
