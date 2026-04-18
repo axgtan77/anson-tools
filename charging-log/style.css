@@ -150,7 +150,7 @@ input, select, button, textarea {
 input[type="text"],
 input[type="number"],
 input[type="date"],
-input[type="datetime-local"],
+input[type="time"],
 select {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -179,11 +179,8 @@ select {
   background-size: 10px 6px;
 }
 input[type="date"],
-input[type="datetime-local"] {
+input[type="time"] {
   padding-right: 8px;
-}
-input[type="datetime-local"] {
-  font-size: 14px;
 }
 input:focus, select:focus {
   outline: 2px solid var(--accent);
@@ -402,13 +399,12 @@ details[open] summary { margin-bottom: 10px; }
   input[type="text"],
   input[type="number"],
   input[type="date"],
-  input[type="datetime-local"],
+  input[type="time"],
   select {
     padding: 8px 10px;
     font-size: 15px;
   }
   select { padding-right: 26px; }
-  input[type="datetime-local"] { font-size: 13px; padding: 8px 6px; }
 }
 
 @media (max-width: 380px) {
