@@ -125,7 +125,7 @@ a:hover { text-decoration: underline; }
 
 .grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 .grid label {
@@ -407,6 +407,3 @@ details[open] summary { margin-bottom: 10px; }
   select { padding-right: 26px; }
 }
 
-@media (max-width: 380px) {
-  .grid { grid-template-columns: 1fr; gap: 8px; }
-}
