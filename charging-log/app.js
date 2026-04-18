@@ -322,6 +322,7 @@ function render() {
   renderVehicles();
   renderStats();
   renderHistory();
+  updateOdoHint();
 }
 
 function normalizePct(v) {
