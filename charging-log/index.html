@@ -9,16 +9,20 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <a href="../index.html">← Home</a>
+      <a href="../index.html" class="back">←</a>
       <h1>EV Charging Log</h1>
     </div>
-    <nav>
-      <a href="../byd-trip-calculator/index.html">Trip Calculator</a>
-    </nav>
   </header>
 
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="log">Log</button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="stats">Stats</button>
+    <button class="tab" data-tab="vehicles">Vehicles</button>
+  </nav>
+
   <main class="layout">
-    <section class="card form-card">
+    <section class="card form-card tab-panel active" data-panel="log">
       <h2>Log a Charge</h2>
       <form id="charge-form">
         <div class="grid">
@@ -69,12 +73,50 @@
       </form>
     </section>
 
-    <section class="card stats-card">
+    <section class="card history-card tab-panel" data-panel="history">
+      <div class="card-head">
+        <h2>History</h2>
+        <div class="actions">
+          <button id="export-btn" class="ghost">Export</button>
+          <label class="ghost file-btn">
+            Import
+            <input type="file" id="import-input" accept="application/json" hidden />
+          </label>
+          <button id="load-seed-btn" class="ghost">Load Seed</button>
+          <button id="clear-btn" class="danger">Clear</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>ODO</th>
+              <th>%</th>
+              <th>kWh</th>
+              <th>kW</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>₱</th>
+              <th>km/kWh</th>
+              <th>km</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="history-cards" class="history-cards"></div>
+    </section>
+
+    <section class="card stats-card tab-panel" data-panel="stats">
       <h2>Stats</h2>
       <div id="stats" class="stats-grid"></div>
     </section>
 
-    <section class="card vehicles-card">
+    <section class="card vehicles-card tab-panel" data-panel="vehicles">
       <h2>Vehicles</h2>
       <ul id="vehicle-list"></ul>
       <details>
@@ -94,43 +136,6 @@
           </div>
         </form>
       </details>
-    </section>
-
-    <section class="card history-card">
-      <div class="card-head">
-        <h2>History</h2>
-        <div class="actions">
-          <button id="export-btn" class="ghost">Export JSON</button>
-          <label class="ghost file-btn">
-            Import JSON
-            <input type="file" id="import-input" accept="application/json" hidden />
-          </label>
-          <button id="load-seed-btn" class="ghost">Load Seed (42)</button>
-          <button id="clear-btn" class="danger">Clear All</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table id="history-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Vehicle</th>
-              <th>ODO</th>
-              <th>Start→End %</th>
-              <th>kWh</th>
-              <th>kW</th>
-              <th>Duration</th>
-              <th>Location</th>
-              <th>Cost ₱</th>
-              <th>km/kWh</th>
-              <th>km since</th>
-              <th>Notes</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
     </section>
   </main>
 
