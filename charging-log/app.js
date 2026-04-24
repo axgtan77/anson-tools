@@ -137,7 +137,7 @@ function enrich(entries) {
         (curDate - prevDate) / (1000 * 60 * 60 * 24),
       );
       if (prev.actual_kwh && prev.actual_kwh > 0 && e.km_since_last > 0) {
-        prev.km_per_kwh = e.km_since_last / prev.actual_kwh;
+        e.km_per_kwh = e.km_since_last / prev.actual_kwh;
       }
     }
     prev = e;
