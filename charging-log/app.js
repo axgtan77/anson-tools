@@ -106,12 +106,12 @@ function enrich(entries) {
   let prev = null;
   for (const e of sorted) {
     const battery = vehicleBattery(e.vehicle);
-    if (
-      battery &&
-      e.actual_charged_pct != null &&
-      (e.actual_kwh == null || e.actual_kwh === "")
-    ) {
-      e.actual_kwh = battery * e.actual_charged_pct;
+    if (battery && (e.actual_kwh == null || e.actual_kwh === "")) {
+      if (e.actual_charged_pct != null) {
+        e.actual_kwh = battery * e.actual_charged_pct;
+      } else if (e.needed_pct != null) {
+        e.actual_kwh = battery * e.needed_pct;
+      }
     }
     if (e.actual_hours == null) {
       e.actual_hours = hoursBetween(e.time_start, e.actual_end);
