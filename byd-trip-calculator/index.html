@@ -159,6 +159,49 @@
                 <div id="warning-message" class="warning hidden"></div>
             </div>
 
+            <div class="charging-section">
+                <h3>Charging Calculator</h3>
+                <div class="setting-row">
+                    <label for="charger-type">Charger Type</label>
+                    <select id="charger-type">
+                        <option value="dc">DC Fast Charge</option>
+                        <option value="ac">AC (Level 2)</option>
+                    </select>
+                </div>
+                <div class="setting-row">
+                    <label for="charge-from">Charge From</label>
+                    <div class="charge-pct-row">
+                        <input type="range" id="charge-from" min="0" max="99" value="20" />
+                        <span id="charge-from-value">20%</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label for="charge-to">Charge To</label>
+                    <div class="charge-pct-row">
+                        <input type="range" id="charge-to" min="1" max="100" value="80" />
+                        <span id="charge-to-value">80%</span>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label for="charge-start-time">Start Time</label>
+                    <input type="time" id="charge-start-time" value="08:00" />
+                </div>
+                <div id="charge-results" class="charge-results">
+                    <div class="charge-result-row">
+                        <span>Charging Duration</span>
+                        <span id="charge-duration">--</span>
+                    </div>
+                    <div class="charge-result-row">
+                        <span>Energy Added</span>
+                        <span id="charge-energy">--</span>
+                    </div>
+                    <div class="charge-result-row highlight">
+                        <span>Ready By</span>
+                        <span id="charge-ready-time">--</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="specs-section">
                 <h3>Vehicle Specs</h3>
                 <div class="spec-row"><span>Battery Capacity</span><span id="spec-battery">60.48 kWh</span></div>
