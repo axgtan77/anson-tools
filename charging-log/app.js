@@ -178,6 +178,64 @@ function updateEndHint() {
   }
 }
 
+function getDCEffectiveRate(maxKw, soc) {
+  if (soc < 20) return maxKw * 0.85;
+  if (soc < 50) return maxKw;
+  if (soc < 65) return maxKw * 0.9;
+  if (soc < 80) return maxKw * 0.65;
+  if (soc < 90) return maxKw * 0.35;
+  return maxKw * 0.18;
+}
+
+function updateEstEndTime() {
+  const el = $("#est-end-hint");
+  if (!el) return;
+  const f = $("#charge-form");
+  const startTime = f.time_start.value;
+  const startPct = parseFloat(f.start_pct.value);
+  const targetPct = parseFloat(f.target_pct.value);
+  const chargerStr = getChargerValue();
+  const kw = parseChargerKw(chargerStr);
+  const battery = vehicleBattery(f.vehicle.value);
+
+  if (!startTime || isNaN(startPct) || isNaN(targetPct) || !kw || !battery || targetPct <= startPct) {
+    el.textContent = "";
+    return;
+  }
+
+  const fromFrac = startPct / 100;
+  const toFrac = targetPct / 100;
+  const isDC = kw > 22;
+  let totalMinutes = 0;
+
+  if (isDC) {
+    for (let soc = fromFrac * 100; soc < toFrac * 100; soc += 1) {
+      const energyStep = (1 / 100) * battery;
+      const rate = getDCEffectiveRate(kw, soc);
+      totalMinutes += (energyStep / rate) * 60;
+    }
+  } else {
+    const energyNeeded = (toFrac - fromFrac) * battery;
+    totalMinutes = (energyNeeded / kw) * 60;
+  }
+
+  const [sh, sm] = startTime.split(":").map(Number);
+  const endTotalMin = sh * 60 + sm + Math.round(totalMinutes);
+  const endH = Math.floor(endTotalMin / 60) % 24;
+  const endM = endTotalMin % 60;
+  const nextDay = endTotalMin >= 1440;
+
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = Math.round(totalMinutes % 60);
+  let durStr = "";
+  if (hours > 0) durStr += `${hours}h `;
+  durStr += `${mins}m`;
+
+  const endStr = `${String(endH).padStart(2, "0")}:${String(endM).padStart(2, "0")}`;
+  el.textContent = `Est. ${durStr} → ready by ${endStr}${nextDay ? " (+1 day)" : ""}`;
+  el.className = "hint est";
+}
+
 function updateOdoHint() {
   const hint = $("#odo-hint");
   if (!hint) return;
@@ -345,6 +403,7 @@ function render() {
   renderCharts();
   updateOdoHint();
   updateEndHint();
+  updateEstEndTime();
 }
 
 const chartRefs = {};
@@ -566,6 +625,7 @@ function fillForm(entry) {
   f.location.value = entry.location || "";
   f.notes.value = entry.notes || "";
   updateOdoHint();
+  updateEstEndTime();
 }
 
 function resetForm() {
@@ -751,10 +811,12 @@ function init() {
     const tab = e.target.closest(".tab");
     if (tab) switchTab(tab.dataset.tab);
   });
-  $("#charge-form").vehicle.addEventListener("change", updateOdoHint);
+  $("#charge-form").vehicle.addEventListener("change", () => { updateOdoHint(); updateEstEndTime(); });
   $("#charge-form").odo.addEventListener("input", updateOdoHint);
-  $("#charge-form").time_start.addEventListener("input", updateEndHint);
+  $("#charge-form").time_start.addEventListener("input", () => { updateEndHint(); updateEstEndTime(); });
   $("#charge-form").actual_end.addEventListener("input", updateEndHint);
+  $("#charge-form").start_pct.addEventListener("input", updateEstEndTime);
+  $("#charge-form").target_pct.addEventListener("input", updateEstEndTime);
   $("#charger-preset").addEventListener("change", (e) => {
     const custom = $("#charger-custom");
     if (e.target.value === "__other__") {
@@ -764,7 +826,9 @@ function init() {
       custom.hidden = true;
       custom.value = "";
     }
+    updateEstEndTime();
   });
+  $("#charger-custom").addEventListener("input", updateEstEndTime);
   $("#vehicle-form").addEventListener("submit", handleVehicleSubmit);
   $("#vehicle-list").addEventListener("click", handleVehicleListClick);
   $("#export-btn").addEventListener("click", exportJSON);

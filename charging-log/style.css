@@ -418,6 +418,7 @@ tbody tr:hover { background: var(--surface-2); }
 }
 .hint.warn { color: var(--warn); }
 .hint.error { color: var(--danger); }
+.hint.est { color: var(--accent); font-weight: 600; }
 
 details summary {
   cursor: pointer;
