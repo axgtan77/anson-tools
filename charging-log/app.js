@@ -111,6 +111,10 @@ function enrich(entries) {
         e.actual_kwh = battery * e.actual_charged_pct;
       } else if (e.needed_pct != null) {
         e.actual_kwh = battery * e.needed_pct;
+      } else if (e.start_pct != null && e.actual_final_pct != null) {
+        e.actual_kwh = battery * (e.actual_final_pct - e.start_pct);
+      } else if (e.start_pct != null && e.target_pct != null) {
+        e.actual_kwh = battery * (e.target_pct - e.start_pct);
       }
     }
     if (e.actual_hours == null) {
