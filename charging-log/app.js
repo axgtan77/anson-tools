@@ -256,11 +256,8 @@ function updateCostEstimate() {
   const kwh = ((endPct - startPct) / 100) * battery;
   const cost = kwh * rate;
 
-  el.textContent = `Est. ₱${cost.toFixed(2)} (${kwh.toFixed(1)} kWh × ₱${rate}/kWh)`;
-
-  if (!f.cost_php.value) {
-    f.cost_php.value = cost.toFixed(2);
-  }
+  el.textContent = `${kwh.toFixed(1)} kWh × ₱${rate}/kWh`;
+  f.cost_php.value = cost.toFixed(2);
 }
 
 function updateOdoHint() {
