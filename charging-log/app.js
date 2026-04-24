@@ -236,6 +236,33 @@ function updateEstEndTime() {
   el.className = "hint est";
 }
 
+function updateCostEstimate() {
+  const el = $("#cost-hint");
+  if (!el) return;
+  const f = $("#charge-form");
+  const startPct = parseFloat(f.start_pct.value);
+  const targetPct = parseFloat(f.target_pct.value);
+  const finalPct = parseFloat(f.actual_final_pct.value);
+  const rate = parseFloat($("#rate-input").value);
+  const battery = vehicleBattery(f.vehicle.value);
+
+  const endPct = !isNaN(finalPct) ? finalPct : (!isNaN(targetPct) ? targetPct : NaN);
+
+  if (isNaN(startPct) || isNaN(endPct) || isNaN(rate) || !battery || endPct <= startPct) {
+    el.textContent = "";
+    return;
+  }
+
+  const kwh = ((endPct - startPct) / 100) * battery;
+  const cost = kwh * rate;
+
+  el.textContent = `Est. ₱${cost.toFixed(2)} (${kwh.toFixed(1)} kWh × ₱${rate}/kWh)`;
+
+  if (!f.cost_php.value) {
+    f.cost_php.value = cost.toFixed(2);
+  }
+}
+
 function updateOdoHint() {
   const hint = $("#odo-hint");
   if (!hint) return;
@@ -404,6 +431,7 @@ function render() {
   updateOdoHint();
   updateEndHint();
   updateEstEndTime();
+  updateCostEstimate();
 }
 
 const chartRefs = {};
@@ -626,6 +654,7 @@ function fillForm(entry) {
   f.notes.value = entry.notes || "";
   updateOdoHint();
   updateEstEndTime();
+  updateCostEstimate();
 }
 
 function resetForm() {
@@ -811,12 +840,14 @@ function init() {
     const tab = e.target.closest(".tab");
     if (tab) switchTab(tab.dataset.tab);
   });
-  $("#charge-form").vehicle.addEventListener("change", () => { updateOdoHint(); updateEstEndTime(); });
+  $("#charge-form").vehicle.addEventListener("change", () => { updateOdoHint(); updateEstEndTime(); updateCostEstimate(); });
   $("#charge-form").odo.addEventListener("input", updateOdoHint);
   $("#charge-form").time_start.addEventListener("input", () => { updateEndHint(); updateEstEndTime(); });
   $("#charge-form").actual_end.addEventListener("input", updateEndHint);
-  $("#charge-form").start_pct.addEventListener("input", updateEstEndTime);
-  $("#charge-form").target_pct.addEventListener("input", updateEstEndTime);
+  $("#charge-form").start_pct.addEventListener("input", () => { updateEstEndTime(); updateCostEstimate(); });
+  $("#charge-form").target_pct.addEventListener("input", () => { updateEstEndTime(); updateCostEstimate(); });
+  $("#charge-form").actual_final_pct.addEventListener("input", updateCostEstimate);
+  $("#rate-input").addEventListener("input", updateCostEstimate);
   $("#charger-preset").addEventListener("change", (e) => {
     const custom = $("#charger-custom");
     if (e.target.value === "__other__") {

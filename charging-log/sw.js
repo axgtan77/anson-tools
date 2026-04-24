@@ -1,4 +1,4 @@
-const CACHE = "ev-charging-log-v3";
+const CACHE = "ev-charging-log-v4";
 const ASSETS = [
   "./",
   "./index.html",
