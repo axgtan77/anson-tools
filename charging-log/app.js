@@ -6,10 +6,45 @@ const state = {
   editId: null,
 };
 
+let apiAvailable = false;
+let apiBase = "";
+
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
 
-function load() {
+async function detectApi() {
+  const candidates = [
+    window.location.origin,
+    "http://alex-pi5.local:5050",
+    "http://alex-pi5:5050",
+  ];
+  for (const base of candidates) {
+    try {
+      const res = await fetch(`${base}/api/data`, { signal: AbortSignal.timeout(2000) });
+      if (res.ok) {
+        apiBase = base;
+        apiAvailable = true;
+        console.log("API connected:", base);
+        return;
+      }
+    } catch {}
+  }
+  console.log("No API found, using localStorage");
+}
+
+async function load() {
+  if (apiAvailable) {
+    try {
+      const res = await fetch(`${apiBase}/api/data`);
+      const data = await res.json();
+      state.vehicles = data.vehicles || [];
+      state.charging = data.charging || [];
+      localStorage.setItem(LS_KEY, JSON.stringify(data));
+      return;
+    } catch (e) {
+      console.warn("API load failed, falling back to localStorage", e);
+    }
+  }
   const raw = localStorage.getItem(LS_KEY);
   if (raw) {
     try {
@@ -26,10 +61,15 @@ function load() {
 }
 
 function save() {
-  localStorage.setItem(
-    LS_KEY,
-    JSON.stringify({ vehicles: state.vehicles, charging: state.charging }),
-  );
+  const data = { vehicles: state.vehicles, charging: state.charging };
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+  if (apiAvailable) {
+    fetch(`${apiBase}/api/data`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    }).catch((e) => console.warn("API save failed", e));
+  }
 }
 
 function uid() {
@@ -818,17 +858,18 @@ async function loadSeed() {
   }
 }
 
-function clearAll() {
+async function clearAll() {
   if (!confirm("Delete ALL entries and vehicles?")) return;
   state.vehicles = [];
   state.charging = [];
   save();
-  load();
+  await load();
   render();
 }
 
-function init() {
-  load();
+async function init() {
+  await detectApi();
+  await load();
   render();
   resetForm();
 
