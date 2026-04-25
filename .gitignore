@@ -4,3 +4,5 @@
 # Explicitly track only what we want
 !CLAUDE.md
 !.gitignore
+!byd-trip-calculator/
+!byd-trip-calculator/**
