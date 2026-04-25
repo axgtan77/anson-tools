@@ -12,8 +12,6 @@ const EV_MODELS = {
         consumption: { eco: 10.5, normal: 12.5, sport: 15.5 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 29 min)',
-        dcChargeMax: 80,
-        acChargeMax: 7,
     },
     'byd-seal': {
         name: 'BYD Seal',
@@ -22,8 +20,6 @@ const EV_MODELS = {
         consumption: { eco: 10.0, normal: 12.0, sport: 15.0 },
         motor: '230 kW / 308 hp',
         fastCharge: '150 kW (30-80% in 26 min)',
-        dcChargeMax: 150,
-        acChargeMax: 11,
     },
     'byd-dolphin': {
         name: 'BYD Dolphin',
@@ -32,8 +28,6 @@ const EV_MODELS = {
         consumption: { eco: 9.5, normal: 11.5, sport: 14.0 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 29 min)',
-        dcChargeMax: 80,
-        acChargeMax: 7,
     },
     'byd-han': {
         name: 'BYD Han',
@@ -42,8 +36,6 @@ const EV_MODELS = {
         consumption: { eco: 11.5, normal: 13.5, sport: 16.5 },
         motor: '380 kW / 510 hp (AWD)',
         fastCharge: '120 kW (30-80% in 28 min)',
-        dcChargeMax: 120,
-        acChargeMax: 11,
     },
     'tesla-model3-lr': {
         name: 'Tesla Model 3 Long Range',
@@ -52,8 +44,6 @@ const EV_MODELS = {
         consumption: { eco: 9.0, normal: 11.0, sport: 13.5 },
         motor: '366 kW / 491 hp (AWD)',
         fastCharge: '250 kW (30-80% in 22 min)',
-        dcChargeMax: 250,
-        acChargeMax: 11,
     },
     'tesla-modely-lr': {
         name: 'Tesla Model Y Long Range',
@@ -62,8 +52,6 @@ const EV_MODELS = {
         consumption: { eco: 10.0, normal: 12.0, sport: 15.0 },
         motor: '378 kW / 507 hp (AWD)',
         fastCharge: '250 kW (30-80% in 25 min)',
-        dcChargeMax: 250,
-        acChargeMax: 11,
     },
     'tesla-model3-sr': {
         name: 'Tesla Model 3 Standard Range',
@@ -72,8 +60,6 @@ const EV_MODELS = {
         consumption: { eco: 8.5, normal: 10.5, sport: 13.0 },
         motor: '208 kW / 279 hp',
         fastCharge: '170 kW (30-80% in 20 min)',
-        dcChargeMax: 170,
-        acChargeMax: 11,
     },
     'mg4-lr': {
         name: 'MG4 Long Range',
@@ -82,8 +68,6 @@ const EV_MODELS = {
         consumption: { eco: 10.0, normal: 12.0, sport: 14.5 },
         motor: '150 kW / 201 hp',
         fastCharge: '135 kW (30-80% in 26 min)',
-        dcChargeMax: 135,
-        acChargeMax: 11,
     },
     'hyundai-ioniq5-lr': {
         name: 'Hyundai Ioniq 5 Long Range',
@@ -92,8 +76,6 @@ const EV_MODELS = {
         consumption: { eco: 10.5, normal: 12.5, sport: 15.5 },
         motor: '225 kW / 302 hp',
         fastCharge: '240 kW (10-80% in 18 min)',
-        dcChargeMax: 240,
-        acChargeMax: 11,
     },
     'kia-ev6-lr': {
         name: 'Kia EV6 Long Range',
@@ -102,8 +84,6 @@ const EV_MODELS = {
         consumption: { eco: 10.0, normal: 12.0, sport: 15.0 },
         motor: '229 kW / 307 hp',
         fastCharge: '240 kW (10-80% in 18 min)',
-        dcChargeMax: 240,
-        acChargeMax: 11,
     },
     'nissan-leaf-eplus': {
         name: 'Nissan Leaf e+',
@@ -112,8 +92,6 @@ const EV_MODELS = {
         consumption: { eco: 11.0, normal: 13.5, sport: 16.5 },
         motor: '160 kW / 214 hp',
         fastCharge: '46 kW (30-80% in 45 min)',
-        dcChargeMax: 46,
-        acChargeMax: 6.6,
     },
     'volvo-ex30': {
         name: 'Volvo EX30',
@@ -122,8 +100,6 @@ const EV_MODELS = {
         consumption: { eco: 10.0, normal: 12.0, sport: 14.5 },
         motor: '200 kW / 268 hp',
         fastCharge: '153 kW (10-80% in 26 min)',
-        dcChargeMax: 153,
-        acChargeMax: 11,
     },
     'gac-aion-y-plus': {
         name: 'GAC Aion Y Plus',
@@ -132,8 +108,6 @@ const EV_MODELS = {
         consumption: { eco: 9.0, normal: 11.0, sport: 13.5 },
         motor: '150 kW / 201 hp',
         fastCharge: '80 kW (30-80% in 32 min)',
-        dcChargeMax: 80,
-        acChargeMax: 6.6,
     },
     'chery-tiggo-8-pro-e': {
         name: 'Chery Tiggo 8 Pro e+',
@@ -142,8 +116,6 @@ const EV_MODELS = {
         consumption: { eco: 12.0, normal: 14.5, sport: 17.5 },
         motor: '155 kW / 208 hp',
         fastCharge: '80 kW (30-80% in 35 min)',
-        dcChargeMax: 80,
-        acChargeMax: 6.6,
     },
     'geely-emgrand-ev': {
         name: 'Geely Emgrand EV',
@@ -152,8 +124,6 @@ const EV_MODELS = {
         consumption: { eco: 9.5, normal: 11.5, sport: 14.0 },
         motor: '100 kW / 134 hp',
         fastCharge: '60 kW (30-80% in 30 min)',
-        dcChargeMax: 60,
-        acChargeMax: 6.6,
     },
     'geely-galaxy-e5': {
         name: 'Geely Galaxy E5',
@@ -162,8 +132,6 @@ const EV_MODELS = {
         consumption: { eco: 9.5, normal: 11.5, sport: 14.5 },
         motor: '160 kW / 215 hp',
         fastCharge: '115 kW (30-80% in 22 min)',
-        dcChargeMax: 115,
-        acChargeMax: 11,
     },
     'zeekr-001-lr': {
         name: 'Zeekr 001 Long Range',
@@ -172,8 +140,6 @@ const EV_MODELS = {
         consumption: { eco: 11.0, normal: 13.5, sport: 16.5 },
         motor: '400 kW / 536 hp (AWD)',
         fastCharge: '200 kW (10-80% in 30 min)',
-        dcChargeMax: 200,
-        acChargeMax: 11,
     },
     'zeekr-x': {
         name: 'Zeekr X',
@@ -182,8 +148,6 @@ const EV_MODELS = {
         consumption: { eco: 10.5, normal: 12.5, sport: 15.0 },
         motor: '200 kW / 268 hp',
         fastCharge: '150 kW (10-80% in 28 min)',
-        dcChargeMax: 150,
-        acChargeMax: 11,
     },
     'denza-d9-ev': {
         name: 'Denza D9 EV',
@@ -192,8 +156,6 @@ const EV_MODELS = {
         consumption: { eco: 12.5, normal: 15.0, sport: 18.5 },
         motor: '230 kW / 308 hp',
         fastCharge: '166 kW (30-80% in 28 min)',
-        dcChargeMax: 166,
-        acChargeMax: 11,
     },
     'xiaomi-su7': {
         name: 'Xiaomi SU7',
@@ -202,8 +164,6 @@ const EV_MODELS = {
         consumption: { eco: 8.0, normal: 10.0, sport: 12.5 },
         motor: '220 kW / 295 hp',
         fastCharge: '210 kW (10-80% in 24 min)',
-        dcChargeMax: 210,
-        acChargeMax: 11,
     },
     'xiaomi-su7-max': {
         name: 'Xiaomi SU7 Max',
@@ -212,8 +172,6 @@ const EV_MODELS = {
         consumption: { eco: 9.0, normal: 11.0, sport: 14.0 },
         motor: '495 kW / 664 hp (AWD)',
         fastCharge: '210 kW (10-80% in 28 min)',
-        dcChargeMax: 210,
-        acChargeMax: 11,
     },
 };
 
@@ -598,7 +556,6 @@ modelSelect.addEventListener('change', () => {
     selectedModel = modelSelect.value;
     updateModelDisplay();
     tryCalculateRoute();
-    calculateChargeTime();
 });
 
 // Initialize model display
@@ -616,91 +573,6 @@ batterySlider.addEventListener('input', () => {
     else batteryValue.style.color = '#f44336';
     tryCalculateRoute();
 });
-
-// Charging calculator
-const chargerType = document.getElementById('charger-type');
-const chargeFrom = document.getElementById('charge-from');
-const chargeTo = document.getElementById('charge-to');
-const chargeFromValue = document.getElementById('charge-from-value');
-const chargeToValue = document.getElementById('charge-to-value');
-const chargeStartTime = document.getElementById('charge-start-time');
-
-function getDCChargeRate(model, soc) {
-    const maxRate = model.dcChargeMax;
-    if (soc < 20) return maxRate * 0.85;
-    if (soc < 50) return maxRate;
-    if (soc < 65) return maxRate * 0.9;
-    if (soc < 80) return maxRate * 0.65;
-    if (soc < 90) return maxRate * 0.35;
-    return maxRate * 0.18;
-}
-
-function calculateChargeTime() {
-    const model = EV_MODELS[selectedModel];
-    const fromPct = parseInt(chargeFrom.value);
-    const toPct = parseInt(chargeTo.value);
-
-    if (fromPct >= toPct) {
-        document.getElementById('charge-duration').textContent = '--';
-        document.getElementById('charge-energy').textContent = '--';
-        document.getElementById('charge-ready-time').textContent = '--';
-        return;
-    }
-
-    const isDC = chargerType.value === 'dc';
-    let totalMinutes = 0;
-    const stepSize = 1;
-
-    for (let soc = fromPct; soc < toPct; soc += stepSize) {
-        const energyForStep = (stepSize / 100) * model.battery;
-        const chargeRate = isDC ? getDCChargeRate(model, soc) : model.acChargeMax;
-        const hoursForStep = energyForStep / chargeRate;
-        totalMinutes += hoursForStep * 60;
-    }
-
-    const energyAdded = ((toPct - fromPct) / 100) * model.battery;
-
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = Math.round(totalMinutes % 60);
-    let durationStr = '';
-    if (hours > 0) durationStr += `${hours}h `;
-    durationStr += `${mins}m`;
-
-    const [startH, startM] = chargeStartTime.value.split(':').map(Number);
-    const startTotalMin = startH * 60 + startM;
-    const endTotalMin = startTotalMin + Math.round(totalMinutes);
-    const endH = Math.floor(endTotalMin / 60) % 24;
-    const endM = endTotalMin % 60;
-    const nextDay = endTotalMin >= 1440;
-    const readyStr = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}${nextDay ? ' (+1 day)' : ''}`;
-
-    document.getElementById('charge-duration').textContent = durationStr;
-    document.getElementById('charge-energy').textContent = `${energyAdded.toFixed(1)} kWh`;
-    document.getElementById('charge-ready-time').textContent = readyStr;
-}
-
-chargeFrom.addEventListener('input', () => {
-    chargeFromValue.textContent = `${chargeFrom.value}%`;
-    if (parseInt(chargeFrom.value) >= parseInt(chargeTo.value)) {
-        chargeTo.value = Math.min(parseInt(chargeFrom.value) + 1, 100);
-        chargeToValue.textContent = `${chargeTo.value}%`;
-    }
-    calculateChargeTime();
-});
-
-chargeTo.addEventListener('input', () => {
-    chargeToValue.textContent = `${chargeTo.value}%`;
-    if (parseInt(chargeTo.value) <= parseInt(chargeFrom.value)) {
-        chargeFrom.value = Math.max(parseInt(chargeTo.value) - 1, 0);
-        chargeFromValue.textContent = `${chargeFrom.value}%`;
-    }
-    calculateChargeTime();
-});
-
-chargerType.addEventListener('change', calculateChargeTime);
-chargeStartTime.addEventListener('input', calculateChargeTime);
-
-calculateChargeTime();
 
 // Init
 initMap();

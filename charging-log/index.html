@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EV Charging Log</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#181b22" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Charging Log" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <a href="../index.html" class="back">←</a>
+      <h1>EV Charging Log</h1>
+    </div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="log">Log</button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="stats">Stats</button>
+    <button class="tab" data-tab="vehicles">Vehicles</button>
+  </nav>
+
+  <main class="layout">
+    <section class="card form-card tab-panel active" data-panel="log">
+      <h2>Log a Charge</h2>
+      <form id="charge-form">
+        <div class="grid">
+          <label>Date
+            <input type="date" name="date" required />
+          </label>
+          <label>Vehicle
+            <select name="vehicle" id="vehicle-select" required></select>
+          </label>
+          <label>ODO (km)
+            <input type="number" step="1" name="odo" placeholder="e.g. 5533" />
+            <small class="hint" id="odo-hint"></small>
+          </label>
+          <label>Location
+            <input type="text" name="location" placeholder="Garage, UP Town, ..." />
+          </label>
+
+          <label>Start charge %
+            <input type="number" step="1" min="0" max="100" name="start_pct" required />
+          </label>
+          <label>Target %
+            <input type="number" step="1" min="0" max="100" name="target_pct" />
+          </label>
+          <label>Final % (actual)
+            <input type="number" step="1" min="0" max="100" name="actual_final_pct" />
+          </label>
+          <label>Charger (kW)
+            <select name="charger_preset" id="charger-preset">
+              <optgroup label="AC Home">
+                <option value="1.9 Kw">1.9 kW · portable</option>
+                <option value="3.3 Kw">3.3 kW · slow AC</option>
+                <option value="6.1 Kw" selected>6.1 kW · home wall</option>
+                <option value="7.0 Kw">7.0 kW · Level 2</option>
+                <option value="11 Kw">11 kW · 3-phase</option>
+                <option value="22 Kw">22 kW · 3-phase</option>
+              </optgroup>
+              <optgroup label="DC Fast">
+                <option value="24 Kw">24 kW · DC</option>
+                <option value="50 Kw">50 kW · DC</option>
+                <option value="60 Kw">60 kW · DC</option>
+                <option value="120 Kw">120 kW · DC</option>
+                <option value="150 Kw">150 kW · DC</option>
+                <option value="180 Kw">180 kW · DC</option>
+                <option value="250 Kw">250 kW · DC</option>
+              </optgroup>
+              <option value="__other__">Other…</option>
+            </select>
+            <input type="text" name="charger" id="charger-custom" placeholder="e.g. 8.5 Kw" hidden />
+          </label>
+
+          <label>Start time
+            <input type="time" name="time_start" />
+          </label>
+          <label>End time (actual)
+            <input type="time" name="actual_end" />
+            <small class="hint" id="end-hint"></small>
+            <small class="hint est" id="est-end-hint"></small>
+          </label>
+
+          <label>Cost (₱)
+            <input type="number" step="0.01" name="cost_php" />
+            <small class="hint est" id="cost-hint"></small>
+          </label>
+          <label>Rate (₱/kWh)
+            <input type="number" step="any" name="rate_per_kwh" id="rate-input" value="11.7854" />
+            <small class="hint">Meralco residential</small>
+          </label>
+          <label class="full">Notes
+            <input type="text" name="notes" placeholder="Optional" />
+          </label>
+        </div>
+        <div class="actions">
+          <button type="submit" class="primary">Save Entry</button>
+          <button type="button" id="duplicate-last" class="ghost">⎘ Copy last</button>
+          <button type="button" id="cancel-edit" class="ghost" hidden>Cancel Edit</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="card history-card tab-panel" data-panel="history">
+      <div class="card-head">
+        <h2>History</h2>
+        <div class="actions">
+          <button id="export-btn" class="ghost">Export</button>
+          <label class="ghost file-btn">
+            Import
+            <input type="file" id="import-input" accept="application/json" hidden />
+          </label>
+          <button id="load-seed-btn" class="ghost">Load Seed</button>
+          <button id="clear-btn" class="danger">Clear</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Vehicle</th>
+              <th>ODO</th>
+              <th>%</th>
+              <th>kWh</th>
+              <th>kW</th>
+              <th>Time</th>
+              <th>Location</th>
+              <th>₱</th>
+              <th>km/kWh</th>
+              <th>km</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="history-cards" class="history-cards"></div>
+    </section>
+
+    <section class="card stats-card tab-panel" data-panel="stats">
+      <h2>Stats</h2>
+      <div id="stats" class="stats-grid"></div>
+      <div class="charts">
+        <div class="chart-box">
+          <h3>Cost per month (₱)</h3>
+          <canvas id="chart-cost"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>kWh per month</h3>
+          <canvas id="chart-kwh"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Efficiency trend (km/kWh)</h3>
+          <canvas id="chart-eff"></canvas>
+        </div>
+        <div class="chart-box">
+          <h3>Cost breakdown by location (₱)</h3>
+          <canvas id="chart-loc"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <section class="card vehicles-card tab-panel" data-panel="vehicles">
+      <h2>Vehicles</h2>
+      <ul id="vehicle-list"></ul>
+      <details>
+        <summary>Add / edit vehicle</summary>
+        <form id="vehicle-form" class="grid">
+          <label>Model
+            <input type="text" name="model" required />
+          </label>
+          <label>Battery (kWh)
+            <input type="number" step="0.01" name="battery_kwh" />
+          </label>
+          <label>Range (km)
+            <input type="number" step="0.1" name="range_km" />
+          </label>
+          <div class="actions">
+            <button type="submit" class="primary">Save Vehicle</button>
+          </div>
+        </form>
+      </details>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
