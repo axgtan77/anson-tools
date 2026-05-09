@@ -98,7 +98,7 @@ class _AddSetSheetState extends State<AddSetSheet> {
           const SizedBox(height: 8),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
-            title: const Text('Bodyweight (自重)'),
+            title: const Text('Bodyweight'),
             value: _bodyweight,
             activeColor: Colors.red,
             onChanged: (v) => setState(() => _bodyweight = v),

@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       case OneRMFormula.brzycki:
         return 'Brzycki — w × 36/(37 − reps)';
       case OneRMFormula.oConner:
-        return 'O\'Conner — w × (1 + 0.025·reps)  (matches 筋トレMEMO)';
+        return 'O\'Conner — w × (1 + 0.025·reps)';
     }
   }
 

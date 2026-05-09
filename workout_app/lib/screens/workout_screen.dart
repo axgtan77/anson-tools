@@ -192,7 +192,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         title: const Text('Delete this set?'),
         content: Text(
           s.isBodyweight
-              ? '自重 × ${s.reps} reps'
+              ? 'BW × ${s.reps} reps'
               : '${s.weight}kg × ${s.reps} reps',
         ),
         actions: [

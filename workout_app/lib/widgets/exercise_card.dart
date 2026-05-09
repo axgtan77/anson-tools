@@ -153,7 +153,7 @@ class _SetRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final weightStr =
-        set.isBodyweight ? '自重' : '${fmtKg(set.weight)} kg';
+        set.isBodyweight ? 'BW' : '${fmtKg(set.weight)} kg';
     final rmStr = set.isBodyweight
         ? ''
         : '(1RM:${_fmtRM(set.estimated1RM)})';

@@ -163,12 +163,12 @@ class DatabaseHelper {
 
   Future<void> _seedExercises(Database db) async {
     const seeds = [
-      'ベンチプレス',
-      'ダンベルプレス',
-      'インクラインダンベルプレス',
-      'ディップス',
-      'ケーブルフライ',
-      'フェイスプル',
+      'Bench Press',
+      'Dumbbell Press',
+      'Incline Dumbbell Press',
+      'Dips',
+      'Cable Fly',
+      'Face Pull',
     ];
     for (var i = 0; i < seeds.length; i++) {
       await db.insert('exercises', {

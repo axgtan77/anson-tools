@@ -209,7 +209,7 @@ class _DateBlock extends StatelessWidget {
           const SizedBox(height: 4),
           ...List.generate(sets.length, (i) {
             final s = sets[i];
-            final w = s.isBodyweight ? '自重' : '${fmtKg(s.weight)}kg';
+            final w = s.isBodyweight ? 'BW' : '${fmtKg(s.weight)}kg';
             final rm = s.isBodyweight
                 ? ''
                 : '  (1RM:${s.estimated1RM.toStringAsFixed(2)})';
