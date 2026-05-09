@@ -17,7 +17,7 @@ class WorkoutApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
     return MaterialApp(
-      title: 'Workout Log',
+      title: 'Liftbook',
       theme: ThemeData(
         colorSchemeSeed: Colors.red,
         useMaterial3: true,

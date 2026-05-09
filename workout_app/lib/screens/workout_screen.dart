@@ -402,7 +402,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         child: Column(
           children: [
             _Header(
-              dateLabel: '$headerDate WorkOut',
+              dateLabel: '$headerDate · Liftbook',
               onTapDate: _pickDate,
               onHistory: () => _navTo(const HistoryScreen()),
               onMenuSelected: (v) {

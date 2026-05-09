@@ -1,5 +1,5 @@
-name: workout_app
-description: Strength-training log with auto 1RM estimation and MAX RM tracking.
+name: liftbook
+description: Liftbook — a strength-training journal with auto 1RM and personal-best tracking.
 publish_to: 'none'
 version: 0.1.0+1
 

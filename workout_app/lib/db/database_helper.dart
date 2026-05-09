@@ -163,12 +163,35 @@ class DatabaseHelper {
 
   Future<void> _seedExercises(Database db) async {
     const seeds = [
+      // Push
       'Bench Press',
-      'Dumbbell Press',
-      'Incline Dumbbell Press',
-      'Dips',
+      'Incline Bench Press',
+      'Dumbbell Bench Press',
+      'Overhead Press',
+      'Lateral Raise',
       'Cable Fly',
+      'Tricep Pushdown',
+      'Dips',
+      // Pull
+      'Deadlift',
+      'Romanian Deadlift',
+      'Pull-Up',
+      'Lat Pulldown',
+      'Barbell Row',
       'Face Pull',
+      'Barbell Curl',
+      'Hammer Curl',
+      // Legs
+      'Back Squat',
+      'Front Squat',
+      'Leg Press',
+      'Bulgarian Split Squat',
+      'Hip Thrust',
+      'Calf Raise',
+      // Core
+      'Hanging Leg Raise',
+      'Plank',
+      'Cable Crunch',
     ];
     for (var i = 0; i < seeds.length; i++) {
       await db.insert('exercises', {
