@@ -1,9 +1,14 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../db/database_helper.dart';
 import '../models/exercise.dart';
 import '../models/workout_set.dart';
+import '../utils/csv_io.dart';
 import '../widgets/add_set_sheet.dart';
 import '../widgets/exercise_card.dart';
 import '../widgets/rest_timer_bar.dart';
@@ -12,10 +17,12 @@ import 'exercise_detail_screen.dart';
 import 'exercise_picker.dart';
 import 'history_screen.dart';
 import 'manage_exercises_screen.dart';
+import 'plate_calculator_screen.dart';
+import 'settings_screen.dart';
 import 'templates_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
-  final String date; // YYYY-MM-DD
+  final String date;
   const WorkoutScreen({super.key, required this.date});
 
   @override
@@ -26,9 +33,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
   List<Exercise> _exercises = [];
   Map<int, List<WorkoutSet>> _setsByExercise = {};
   Map<int, double> _maxRMByExercise = {};
+  String? _dayNote;
   bool _loading = true;
 
-  // Rest timer state.
   DateTime? _restEndsAt;
   String _restExerciseName = '';
 
@@ -64,13 +71,46 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       maxRM[e.id!] = await db.allTimeMaxRM(e.id!);
     }
 
+    final note = await db.getWorkoutNote(widget.date);
+
     if (!mounted) return;
     setState(() {
       _exercises = exercises;
       _setsByExercise = byEx;
       _maxRMByExercise = maxRM;
+      _dayNote = note;
       _loading = false;
     });
+  }
+
+  Future<void> _editDayNote() async {
+    final ctrl = TextEditingController(text: _dayNote ?? '');
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Workout notes'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: 5,
+          minLines: 3,
+          decoration: const InputDecoration(
+            hintText: 'How did the session feel? Any cues for next time?',
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, ctrl.text),
+              child: const Text('Save')),
+        ],
+      ),
+    );
+    if (result == null) return;
+    await DatabaseHelper.instance.setWorkoutNote(widget.date, result);
+    await _load();
   }
 
   Future<void> _addExerciseToWorkout() async {
@@ -111,6 +151,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       weight: result.weight,
       reps: result.reps,
       isBodyweight: result.isBodyweight,
+      notes: result.notes,
     ));
     _startRestTimer(ex);
     await _load();
@@ -126,6 +167,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         initialWeight: s.isBodyweight ? null : s.weight,
         initialReps: s.reps,
         initialBodyweight: s.isBodyweight,
+        initialNotes: s.notes,
         isEdit: true,
       ),
     );
@@ -138,6 +180,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       weight: result.weight,
       reps: result.reps,
       isBodyweight: result.isBodyweight,
+      notes: result.notes,
     ));
     await _load();
   }
@@ -218,9 +261,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     });
   }
 
-  void _skipRest() {
-    setState(() => _restEndsAt = null);
-  }
+  void _skipRest() => setState(() => _restEndsAt = null);
 
   void _addRestTime() {
     final base = _restEndsAt ?? DateTime.now();
@@ -254,32 +295,71 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  Future<void> _openHistory() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const HistoryScreen()),
-    );
+  Future<void> _exportCsv() async {
+    try {
+      final file = await exportSetsCsv();
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'Workout log export',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Export failed: $e')),
+      );
+    }
   }
 
-  Future<void> _openManageExercises() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ManageExercisesScreen()),
+  Future<void> _importCsv() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['csv'],
     );
+    if (picked == null || picked.files.single.path == null) return;
+    final result = await importSetsCsv(File(picked.files.single.path!));
+    if (!mounted) return;
     await _load();
-  }
-
-  Future<void> _openTemplates() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const TemplatesScreen()),
+    final msg = StringBuffer(
+      'Imported ${result.setsInserted} of ${result.rowsRead} rows. '
+      '${result.exercisesCreated} new exercises.',
     );
-  }
-
-  Future<void> _openBodyWeight() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const BodyWeightScreen()),
+    if (result.errors.isNotEmpty) {
+      msg.writeln();
+      msg.writeln('${result.errors.length} error(s).');
+    }
+    if (!mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Import done'),
+        content: Text(msg.toString()),
+        actions: [
+          if (result.errors.isNotEmpty)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                showDialog<void>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Import errors'),
+                    content: SingleChildScrollView(
+                      child: Text(result.errors.join('\n')),
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK')),
+                    ],
+                  ),
+                );
+              },
+              child: const Text('Show errors'),
+            ),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('OK')),
+        ],
+      ),
     );
   }
 
@@ -292,6 +372,12 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Applied template: ${t.name}')),
     );
+  }
+
+  Future<void> _navTo(Widget screen, {bool reload = false}) async {
+    await Navigator.push(
+        context, MaterialPageRoute(builder: (_) => screen));
+    if (reload) await _load();
   }
 
   @override
@@ -318,24 +404,37 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
             _Header(
               dateLabel: '$headerDate WorkOut',
               onTapDate: _pickDate,
-              onHistory: _openHistory,
+              onHistory: () => _navTo(const HistoryScreen()),
               onMenuSelected: (v) {
                 switch (v) {
                   case 'apply':
                     _applyTemplate();
                     break;
                   case 'templates':
-                    _openTemplates();
+                    _navTo(const TemplatesScreen());
                     break;
                   case 'manage':
-                    _openManageExercises();
+                    _navTo(const ManageExercisesScreen(), reload: true);
                     break;
                   case 'bodyweight':
-                    _openBodyWeight();
+                    _navTo(const BodyWeightScreen());
+                    break;
+                  case 'plate':
+                    _navTo(const PlateCalculatorScreen());
+                    break;
+                  case 'export':
+                    _exportCsv();
+                    break;
+                  case 'import':
+                    _importCsv();
+                    break;
+                  case 'settings':
+                    _navTo(const SettingsScreen(), reload: true);
                     break;
                 }
               },
             ),
+            _DayNoteBanner(notes: _dayNote, onTap: _editDayNote),
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
@@ -435,9 +534,62 @@ class _Header extends StatelessWidget {
               PopupMenuDivider(),
               PopupMenuItem(
                   value: 'bodyweight', child: Text('Body weight')),
+              PopupMenuItem(
+                  value: 'plate', child: Text('Plate calculator')),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                  value: 'export', child: Text('Export CSV')),
+              PopupMenuItem(
+                  value: 'import', child: Text('Import CSV')),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                  value: 'settings', child: Text('Settings')),
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DayNoteBanner extends StatelessWidget {
+  final String? notes;
+  final VoidCallback onTap;
+  const _DayNoteBanner({required this.notes, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final hasNotes = notes != null && notes!.isNotEmpty;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        color: hasNotes ? Colors.amber.shade50 : Colors.grey.shade50,
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          children: [
+            Icon(
+              hasNotes ? Icons.sticky_note_2 : Icons.edit_note,
+              size: 18,
+              color: Colors.black54,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                hasNotes ? notes! : 'Add workout notes…',
+                style: TextStyle(
+                  color: hasNotes ? Colors.black87 : Colors.black45,
+                  fontSize: 13,
+                  fontStyle:
+                      hasNotes ? FontStyle.normal : FontStyle.italic,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

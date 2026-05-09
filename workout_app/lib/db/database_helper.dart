@@ -32,7 +32,7 @@ class Template {
 }
 
 class BodyWeightEntry {
-  final String date; // YYYY-MM-DD
+  final String date;
   final double weightKg;
   final String? notes;
 
@@ -57,14 +57,16 @@ class DatabaseHelper {
     final path = join(await getDatabasesPath(), 'workout.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await _createV1(db);
         await _migrateToV2(db);
+        await _migrateToV3(db);
         await _seedExercises(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _migrateToV2(db);
+        if (oldVersion < 3) await _migrateToV3(db);
       },
     );
   }
@@ -94,9 +96,8 @@ class DatabaseHelper {
   }
 
   Future<void> _migrateToV2(Database db) async {
-    final existingCols = await db.rawQuery('PRAGMA table_info(exercises)');
-    final hasRest = existingCols.any((c) => c['name'] == 'rest_seconds');
-    if (!hasRest) {
+    final exCols = await db.rawQuery('PRAGMA table_info(exercises)');
+    if (!exCols.any((c) => c['name'] == 'rest_seconds')) {
       await db.execute(
           'ALTER TABLE exercises ADD COLUMN rest_seconds INTEGER NOT NULL DEFAULT 90');
     }
@@ -139,6 +140,27 @@ class DatabaseHelper {
     ''');
   }
 
+  Future<void> _migrateToV3(Database db) async {
+    final setsCols = await db.rawQuery('PRAGMA table_info(sets)');
+    if (!setsCols.any((c) => c['name'] == 'notes')) {
+      await db.execute('ALTER TABLE sets ADD COLUMN notes TEXT');
+    }
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS workout_notes (
+        date TEXT PRIMARY KEY,
+        notes TEXT NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+  }
+
   Future<void> _seedExercises(Database db) async {
     const seeds = [
       'ベンチプレス',
@@ -170,6 +192,14 @@ class DatabaseHelper {
     final db = await database;
     final rows =
         await db.query('exercises', where: 'id = ?', whereArgs: [id]);
+    if (rows.isEmpty) return null;
+    return Exercise.fromMap(rows.first);
+  }
+
+  Future<Exercise?> getExerciseByName(String name) async {
+    final db = await database;
+    final rows = await db
+        .query('exercises', where: 'name = ?', whereArgs: [name]);
     if (rows.isEmpty) return null;
     return Exercise.fromMap(rows.first);
   }
@@ -253,6 +283,13 @@ class DatabaseHelper {
     return rows.map(WorkoutSet.fromMap).toList();
   }
 
+  Future<List<WorkoutSet>> allSets() async {
+    final db = await database;
+    final rows = await db.query('sets',
+        orderBy: 'workout_date, exercise_id, set_number');
+    return rows.map(WorkoutSet.fromMap).toList();
+  }
+
   Future<int> insertSet(WorkoutSet s) async {
     final db = await database;
     return db.insert('sets', s.toMap());
@@ -284,12 +321,8 @@ class DatabaseHelper {
     return max;
   }
 
-  // ---- Day exercises (which exercises are on a given workout day) ----
+  // ---- Day exercises ----
 
-  /// Returns exercise IDs for the given date in card display order.
-  ///
-  /// Lazily backfills [day_exercises] rows for any exercise that has sets
-  /// on this date but no positional row yet (i.e. legacy data).
   Future<List<int>> exerciseIdsForDate(String date) async {
     final db = await database;
     final rows = await db.query('day_exercises',
@@ -305,8 +338,7 @@ class DatabaseHelper {
       GROUP BY exercise_id
       ORDER BY first_id
     ''', [date]);
-    final setIds =
-        fromSets.map((r) => r['exercise_id'] as int).toList();
+    final setIds = fromSets.map((r) => r['exercise_id'] as int).toList();
 
     final missing = setIds.where((id) => !positioned.contains(id)).toList();
     if (missing.isNotEmpty) {
@@ -370,6 +402,29 @@ class DatabaseHelper {
     await batch.commit(noResult: true);
   }
 
+  // ---- Workout day notes ----
+
+  Future<String?> getWorkoutNote(String date) async {
+    final db = await database;
+    final rows = await db
+        .query('workout_notes', where: 'date = ?', whereArgs: [date]);
+    if (rows.isEmpty) return null;
+    return rows.first['notes'] as String?;
+  }
+
+  Future<void> setWorkoutNote(String date, String? notes) async {
+    final db = await database;
+    if (notes == null || notes.trim().isEmpty) {
+      await db.delete('workout_notes', where: 'date = ?', whereArgs: [date]);
+      return;
+    }
+    await db.insert(
+      'workout_notes',
+      {'date': date, 'notes': notes.trim()},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
   // ---- Summaries ----
 
   Future<List<DailySummary>> dailySummaries() async {
@@ -421,8 +476,8 @@ class DatabaseHelper {
   Future<void> deleteTemplate(int id) async {
     final db = await database;
     await db.transaction((txn) async {
-      await txn
-          .delete('template_exercises', where: 'template_id = ?', whereArgs: [id]);
+      await txn.delete('template_exercises',
+          where: 'template_id = ?', whereArgs: [id]);
       await txn.delete('templates', where: 'id = ?', whereArgs: [id]);
     });
   }
@@ -452,8 +507,6 @@ class DatabaseHelper {
     });
   }
 
-  /// Apply a template to a workout date — adds any missing exercises
-  /// onto [day_exercises] in the template's order.
   Future<void> applyTemplate(int templateId, String date) async {
     final ids = await templateExerciseIds(templateId);
     for (final exId in ids) {
@@ -486,5 +539,24 @@ class DatabaseHelper {
   Future<void> deleteBodyWeight(String date) async {
     final db = await database;
     await db.delete('body_weights', where: 'date = ?', whereArgs: [date]);
+  }
+
+  // ---- Settings ----
+
+  Future<String?> getSetting(String key) async {
+    final db = await database;
+    final rows =
+        await db.query('settings', where: 'key = ?', whereArgs: [key]);
+    if (rows.isEmpty) return null;
+    return rows.first['value'] as String?;
+  }
+
+  Future<void> setSetting(String key, String value) async {
+    final db = await database;
+    await db.insert(
+      'settings',
+      {'key': key, 'value': value},
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }

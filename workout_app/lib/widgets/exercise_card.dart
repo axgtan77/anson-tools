@@ -166,48 +166,65 @@ class _SetRow extends StatelessWidget {
       onLongPress: onLongPress,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 24,
-              child: Text(
-                '$displayNumber',
-                style: const TextStyle(color: Colors.black54),
-              ),
-            ),
-            SizedBox(
-              width: 90,
-              child: Text(weightStr,
-                  textAlign: TextAlign.right, style: tabular),
-            ),
-            const SizedBox(width: 6),
-            const Text('×'),
-            const SizedBox(width: 6),
-            SizedBox(
-              width: 70,
-              child: Text('${set.reps} reps', style: tabular),
-            ),
-            const SizedBox(width: 4),
-            Expanded(
-              child: Text(
-                rmStr,
-                style: const TextStyle(color: Colors.black54),
-              ),
-            ),
-            if (isMaxRM)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(3),
+            Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  child: Text(
+                    '$displayNumber',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
                 ),
-                child: const Text(
-                  'MAX RM',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                SizedBox(
+                  width: 90,
+                  child: Text(weightStr,
+                      textAlign: TextAlign.right, style: tabular),
+                ),
+                const SizedBox(width: 6),
+                const Text('×'),
+                const SizedBox(width: 6),
+                SizedBox(
+                  width: 70,
+                  child: Text('${set.reps} reps', style: tabular),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    rmStr,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                ),
+                if (isMaxRM)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: const Text(
+                      'MAX RM',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (set.notes != null && set.notes!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(left: 24, top: 1),
+                child: Text(
+                  set.notes!,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 12,
                   ),
                 ),
               ),

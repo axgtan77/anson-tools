@@ -8,6 +8,7 @@ class WorkoutSet {
   final double weight; // kg, 0 when bodyweight
   final int reps;
   final bool isBodyweight;
+  final String? notes;
 
   WorkoutSet({
     this.id,
@@ -17,6 +18,7 @@ class WorkoutSet {
     required this.weight,
     required this.reps,
     this.isBodyweight = false,
+    this.notes,
   });
 
   double get estimated1RM =>
@@ -30,6 +32,7 @@ class WorkoutSet {
         'weight': weight,
         'reps': reps,
         'is_bodyweight': isBodyweight ? 1 : 0,
+        'notes': notes,
       };
 
   factory WorkoutSet.fromMap(Map<String, dynamic> m) => WorkoutSet(
@@ -40,5 +43,6 @@ class WorkoutSet {
         weight: (m['weight'] as num).toDouble(),
         reps: m['reps'] as int,
         isBodyweight: (m['is_bodyweight'] as int? ?? 0) == 1,
+        notes: m['notes'] as String?,
       );
 }

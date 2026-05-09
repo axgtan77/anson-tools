@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../screens/plate_calculator_screen.dart';
+
 class AddSetResult {
   final double weight;
   final int reps;
   final bool isBodyweight;
+  final String? notes;
 
   AddSetResult({
     required this.weight,
     required this.reps,
     required this.isBodyweight,
+    required this.notes,
   });
 }
 
@@ -18,6 +22,7 @@ class AddSetSheet extends StatefulWidget {
   final double? initialWeight;
   final int? initialReps;
   final bool initialBodyweight;
+  final String? initialNotes;
   final bool isEdit;
 
   const AddSetSheet({
@@ -26,6 +31,7 @@ class AddSetSheet extends StatefulWidget {
     this.initialWeight,
     this.initialReps,
     this.initialBodyweight = false,
+    this.initialNotes,
     this.isEdit = false,
   });
 
@@ -36,6 +42,8 @@ class AddSetSheet extends StatefulWidget {
 class _AddSetSheetState extends State<AddSetSheet> {
   final _weightCtrl = TextEditingController();
   final _repsCtrl = TextEditingController();
+  late final _notesCtrl =
+      TextEditingController(text: widget.initialNotes ?? '');
   late bool _bodyweight = widget.initialBodyweight;
 
   @override
@@ -53,7 +61,18 @@ class _AddSetSheetState extends State<AddSetSheet> {
   void dispose() {
     _weightCtrl.dispose();
     _repsCtrl.dispose();
+    _notesCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _openPlateCalc() async {
+    final target = double.tryParse(_weightCtrl.text);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlateCalculatorScreen(initialTarget: target),
+      ),
+    );
   }
 
   @override
@@ -85,21 +104,39 @@ class _AddSetSheetState extends State<AddSetSheet> {
             onChanged: (v) => setState(() => _bodyweight = v),
           ),
           if (!_bodyweight)
-            TextField(
-              controller: _weightCtrl,
-              autofocus: !widget.isEdit,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _weightCtrl,
+                    autofocus: !widget.isEdit,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))
+                    ],
+                    decoration:
+                        const InputDecoration(labelText: 'Weight (kg)'),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Plate calculator',
+                  icon: const Icon(Icons.calculate_outlined),
+                  onPressed: _openPlateCalc,
+                ),
               ],
-              decoration: const InputDecoration(labelText: 'Weight (kg)'),
             ),
           TextField(
             controller: _repsCtrl,
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             decoration: const InputDecoration(labelText: 'Reps'),
+          ),
+          TextField(
+            controller: _notesCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Notes (RPE, form cues, …)',
+            ),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -122,12 +159,14 @@ class _AddSetSheetState extends State<AddSetSheet> {
     final weight =
         _bodyweight ? 0.0 : double.tryParse(_weightCtrl.text) ?? 0;
     if (!_bodyweight && weight <= 0) return;
+    final notes = _notesCtrl.text.trim();
     Navigator.pop(
       context,
       AddSetResult(
         weight: weight,
         reps: reps,
         isBodyweight: _bodyweight,
+        notes: notes.isEmpty ? null : notes,
       ),
     );
   }

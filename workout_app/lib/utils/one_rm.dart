@@ -1,12 +1,37 @@
 enum OneRMFormula { epley, brzycki, oConner }
 
-const OneRMFormula kDefaultFormula = OneRMFormula.epley;
+String oneRMFormulaToString(OneRMFormula f) {
+  switch (f) {
+    case OneRMFormula.epley:
+      return 'epley';
+    case OneRMFormula.brzycki:
+      return 'brzycki';
+    case OneRMFormula.oConner:
+      return 'oconner';
+  }
+}
 
-double estimate1RM(double weight, int reps,
-    {OneRMFormula formula = kDefaultFormula}) {
+OneRMFormula oneRMFormulaFromString(String? s) {
+  switch (s) {
+    case 'brzycki':
+      return OneRMFormula.brzycki;
+    case 'oconner':
+      return OneRMFormula.oConner;
+    case 'epley':
+    default:
+      return OneRMFormula.epley;
+  }
+}
+
+class FormulaSettings {
+  static OneRMFormula current = OneRMFormula.epley;
+}
+
+double estimate1RM(double weight, int reps, {OneRMFormula? formula}) {
   if (reps <= 0 || weight <= 0) return 0;
   if (reps == 1) return weight;
-  switch (formula) {
+  final f = formula ?? FormulaSettings.current;
+  switch (f) {
     case OneRMFormula.epley:
       return weight * (1 + reps / 30.0);
     case OneRMFormula.brzycki:
