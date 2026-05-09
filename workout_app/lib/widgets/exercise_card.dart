@@ -11,7 +11,9 @@ class ExerciseCard extends StatelessWidget {
   final List<WorkoutSet> sets;
   final double allTimeMaxRM;
   final VoidCallback onAddSet;
-  final ValueChanged<WorkoutSet> onDeleteSet;
+  final ValueChanged<WorkoutSet> onTapSet;
+  final ValueChanged<WorkoutSet> onLongPressSet;
+  final VoidCallback onTapTitle;
 
   const ExerciseCard({
     super.key,
@@ -19,7 +21,9 @@ class ExerciseCard extends StatelessWidget {
     required this.sets,
     required this.allTimeMaxRM,
     required this.onAddSet,
-    required this.onDeleteSet,
+    required this.onTapSet,
+    required this.onLongPressSet,
+    required this.onTapTitle,
   });
 
   @override
@@ -39,28 +43,42 @@ class ExerciseCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    exercise.name,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+            InkWell(
+              onTap: onTapTitle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        exercise.name,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Text(maxRMLabel,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w500)),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.chevron_right,
+                        size: 18, color: Colors.black38),
+                  ],
                 ),
-                Text(maxRMLabel,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.w500)),
-              ],
+              ),
             ),
-            const SizedBox(height: 6),
-            ...sets.map((s) => _SetRow(
-                  set: s,
-                  isMaxRM: !s.isBodyweight &&
-                      allTimeMaxRM > 0 &&
-                      (s.estimated1RM - allTimeMaxRM).abs() < 0.005,
-                  onDelete: () => onDeleteSet(s),
-                )),
+            const SizedBox(height: 4),
+            ...List.generate(sets.length, (i) {
+              final s = sets[i];
+              return _SetRow(
+                displayNumber: i + 1,
+                set: s,
+                isMaxRM: !s.isBodyweight &&
+                    allTimeMaxRM > 0 &&
+                    (s.estimated1RM - allTimeMaxRM).abs() < 0.005,
+                onTap: () => onTapSet(s),
+                onLongPress: () => onLongPressSet(s),
+              );
+            }),
             const SizedBox(height: 4),
             Align(
               alignment: Alignment.centerRight,
@@ -79,14 +97,18 @@ class ExerciseCard extends StatelessWidget {
 }
 
 class _SetRow extends StatelessWidget {
+  final int displayNumber;
   final WorkoutSet set;
   final bool isMaxRM;
-  final VoidCallback onDelete;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   const _SetRow({
+    required this.displayNumber,
     required this.set,
     required this.isMaxRM,
-    required this.onDelete,
+    required this.onTap,
+    required this.onLongPress,
   });
 
   @override
@@ -97,19 +119,20 @@ class _SetRow extends StatelessWidget {
         ? ''
         : '(1RM:${_fmtRM(set.estimated1RM)})';
 
-    const tabular = TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
+    const tabular =
+        TextStyle(fontFeatures: [FontFeature.tabularFigures()]);
 
-    return GestureDetector(
-      onLongPress: onDelete,
-      behavior: HitTestBehavior.opaque,
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onLongPress,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 3),
         child: Row(
           children: [
             SizedBox(
               width: 24,
               child: Text(
-                '${set.setNumber}',
+                '$displayNumber',
                 style: const TextStyle(color: Colors.black54),
               ),
             ),

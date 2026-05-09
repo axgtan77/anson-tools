@@ -15,14 +15,18 @@ class AddSetResult {
 
 class AddSetSheet extends StatefulWidget {
   final String exerciseName;
-  final double? lastWeight;
-  final int? lastReps;
+  final double? initialWeight;
+  final int? initialReps;
+  final bool initialBodyweight;
+  final bool isEdit;
 
   const AddSetSheet({
     super.key,
     required this.exerciseName,
-    this.lastWeight,
-    this.lastReps,
+    this.initialWeight,
+    this.initialReps,
+    this.initialBodyweight = false,
+    this.isEdit = false,
   });
 
   @override
@@ -32,16 +36,16 @@ class AddSetSheet extends StatefulWidget {
 class _AddSetSheetState extends State<AddSetSheet> {
   final _weightCtrl = TextEditingController();
   final _repsCtrl = TextEditingController();
-  bool _bodyweight = false;
+  late bool _bodyweight = widget.initialBodyweight;
 
   @override
   void initState() {
     super.initState();
-    if (widget.lastWeight != null && widget.lastWeight! > 0) {
-      _weightCtrl.text = widget.lastWeight!.toStringAsFixed(1);
+    if (widget.initialWeight != null && widget.initialWeight! > 0) {
+      _weightCtrl.text = widget.initialWeight!.toStringAsFixed(1);
     }
-    if (widget.lastReps != null) {
-      _repsCtrl.text = widget.lastReps!.toString();
+    if (widget.initialReps != null) {
+      _repsCtrl.text = widget.initialReps!.toString();
     }
   }
 
@@ -66,7 +70,9 @@ class _AddSetSheetState extends State<AddSetSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            widget.exerciseName,
+            widget.isEdit
+                ? 'Edit set — ${widget.exerciseName}'
+                : widget.exerciseName,
             style: const TextStyle(
                 fontSize: 18, fontWeight: FontWeight.bold),
           ),
@@ -81,7 +87,7 @@ class _AddSetSheetState extends State<AddSetSheet> {
           if (!_bodyweight)
             TextField(
               controller: _weightCtrl,
-              autofocus: true,
+              autofocus: !widget.isEdit,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
@@ -103,7 +109,7 @@ class _AddSetSheetState extends State<AddSetSheet> {
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             onPressed: _save,
-            child: const Text('Save set'),
+            child: Text(widget.isEdit ? 'Update set' : 'Save set'),
           ),
         ],
       ),
