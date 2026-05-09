@@ -6,10 +6,13 @@ import '../models/exercise.dart';
 import '../models/workout_set.dart';
 import '../widgets/add_set_sheet.dart';
 import '../widgets/exercise_card.dart';
+import '../widgets/rest_timer_bar.dart';
+import 'body_weight_screen.dart';
 import 'exercise_detail_screen.dart';
 import 'exercise_picker.dart';
 import 'history_screen.dart';
 import 'manage_exercises_screen.dart';
+import 'templates_screen.dart';
 
 class WorkoutScreen extends StatefulWidget {
   final String date; // YYYY-MM-DD
@@ -20,11 +23,14 @@ class WorkoutScreen extends StatefulWidget {
 }
 
 class _WorkoutScreenState extends State<WorkoutScreen> {
-  /// Exercises shown on this workout, in the order they were first logged.
   List<Exercise> _exercises = [];
   Map<int, List<WorkoutSet>> _setsByExercise = {};
   Map<int, double> _maxRMByExercise = {};
   bool _loading = true;
+
+  // Rest timer state.
+  DateTime? _restEndsAt;
+  String _restExerciseName = '';
 
   @override
   void initState() {
@@ -73,6 +79,9 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       excludeIds: _exercises.map((e) => e.id!).toSet(),
     );
     if (picked == null) return;
+    await DatabaseHelper.instance
+        .addExerciseToDay(widget.date, picked.id!);
+    await _load();
     await _addSet(picked);
   }
 
@@ -103,6 +112,7 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
       reps: result.reps,
       isBodyweight: result.isBodyweight,
     ));
+    _startRestTimer(ex);
     await _load();
   }
 
@@ -157,6 +167,67 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     await _load();
   }
 
+  Future<void> _removeFromDay(Exercise ex) async {
+    final sets = _setsByExercise[ex.id!] ?? const [];
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('Remove "${ex.name}" from this workout?'),
+        content: Text(
+          sets.isEmpty
+              ? 'No sets are logged for it on this day.'
+              : 'This will also delete ${sets.length} logged set(s) for this date.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Remove')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await DatabaseHelper.instance.removeExerciseFromDay(
+      widget.date,
+      ex.id!,
+      cascadeSets: sets.isNotEmpty,
+    );
+    await _load();
+  }
+
+  void _onReorderCards(int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final list = [..._exercises];
+    final moved = list.removeAt(oldIndex);
+    list.insert(newIndex, moved);
+    setState(() => _exercises = list);
+    DatabaseHelper.instance.reorderDayExercises(
+      widget.date,
+      list.map((e) => e.id!).toList(),
+    );
+  }
+
+  void _startRestTimer(Exercise ex) {
+    if (ex.restSeconds <= 0) return;
+    setState(() {
+      _restEndsAt =
+          DateTime.now().add(Duration(seconds: ex.restSeconds));
+      _restExerciseName = ex.name;
+    });
+  }
+
+  void _skipRest() {
+    setState(() => _restEndsAt = null);
+  }
+
+  void _addRestTime() {
+    final base = _restEndsAt ?? DateTime.now();
+    setState(() =>
+        _restEndsAt = base.add(const Duration(seconds: 30)));
+  }
+
   Future<void> _openExerciseDetail(Exercise ex) async {
     await Navigator.push(
       context,
@@ -190,12 +261,37 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
     );
   }
 
-  Future<void> _openManage() async {
+  Future<void> _openManageExercises() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const ManageExercisesScreen()),
     );
     await _load();
+  }
+
+  Future<void> _openTemplates() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TemplatesScreen()),
+    );
+  }
+
+  Future<void> _openBodyWeight() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const BodyWeightScreen()),
+    );
+  }
+
+  Future<void> _applyTemplate() async {
+    final t = await TemplatesScreen.pick(context);
+    if (t == null) return;
+    await DatabaseHelper.instance.applyTemplate(t.id!, widget.date);
+    await _load();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Applied template: ${t.name}')),
+    );
   }
 
   @override
@@ -210,84 +306,138 @@ class _WorkoutScreenState extends State<WorkoutScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Add exercise'),
       ),
+      bottomSheet: RestTimerBar(
+        endsAt: _restEndsAt,
+        exerciseName: _restExerciseName,
+        onSkip: _skipRest,
+        onAddTime: _addRestTime,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              color: Colors.red,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 10),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: _pickDate,
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              '$headerDate WorkOut',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.calendar_today,
-                              color: Colors.white, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.history, color: Colors.white),
-                    tooltip: 'History',
-                    onPressed: _openHistory,
-                  ),
-                  PopupMenuButton<String>(
-                    icon:
-                        const Icon(Icons.more_vert, color: Colors.white),
-                    onSelected: (v) {
-                      if (v == 'manage') _openManage();
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(
-                          value: 'manage',
-                          child: Text('Manage exercises')),
-                    ],
-                  ),
-                ],
-              ),
+            _Header(
+              dateLabel: '$headerDate WorkOut',
+              onTapDate: _pickDate,
+              onHistory: _openHistory,
+              onMenuSelected: (v) {
+                switch (v) {
+                  case 'apply':
+                    _applyTemplate();
+                    break;
+                  case 'templates':
+                    _openTemplates();
+                    break;
+                  case 'manage':
+                    _openManageExercises();
+                    break;
+                  case 'bodyweight':
+                    _openBodyWeight();
+                    break;
+                }
+              },
             ),
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _exercises.isEmpty
                       ? const _EmptyDay()
-                      : ListView(
-                          padding: const EdgeInsets.only(bottom: 96),
-                          children: [
-                            ..._exercises.map((e) => ExerciseCard(
-                                  exercise: e,
-                                  sets:
-                                      _setsByExercise[e.id!] ?? const [],
-                                  allTimeMaxRM:
-                                      _maxRMByExercise[e.id!] ?? 0,
-                                  onAddSet: () => _addSet(e),
-                                  onTapSet: _editSet,
-                                  onLongPressSet: _deleteSet,
-                                  onTapTitle: () =>
-                                      _openExerciseDetail(e),
-                                )),
-                          ],
+                      : ReorderableListView.builder(
+                          padding: const EdgeInsets.only(bottom: 160),
+                          buildDefaultDragHandles: false,
+                          itemCount: _exercises.length,
+                          onReorder: _onReorderCards,
+                          itemBuilder: (context, i) {
+                            final e = _exercises[i];
+                            return ExerciseCard(
+                              key: ValueKey('day-ex-${e.id}'),
+                              exercise: e,
+                              sets: _setsByExercise[e.id!] ?? const [],
+                              allTimeMaxRM:
+                                  _maxRMByExercise[e.id!] ?? 0,
+                              onAddSet: () => _addSet(e),
+                              onTapSet: _editSet,
+                              onLongPressSet: _deleteSet,
+                              onTapTitle: () => _openExerciseDetail(e),
+                              onRemoveFromDay: () => _removeFromDay(e),
+                              dragIndex: i,
+                            );
+                          },
                         ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  final String dateLabel;
+  final VoidCallback onTapDate;
+  final VoidCallback onHistory;
+  final ValueChanged<String> onMenuSelected;
+
+  const _Header({
+    required this.dateLabel,
+    required this.onTapDate,
+    required this.onHistory,
+    required this.onMenuSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: Colors.red,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: onTapDate,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      dateLabel,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(Icons.calendar_today,
+                      color: Colors.white, size: 18),
+                ],
+              ),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.history, color: Colors.white),
+            tooltip: 'History',
+            onPressed: onHistory,
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onSelected: onMenuSelected,
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                  value: 'apply', child: Text('Apply template')),
+              PopupMenuItem(
+                  value: 'templates',
+                  child: Text('Manage templates')),
+              PopupMenuItem(
+                  value: 'manage',
+                  child: Text('Manage exercises')),
+              PopupMenuDivider(),
+              PopupMenuItem(
+                  value: 'bodyweight', child: Text('Body weight')),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -307,7 +457,8 @@ class _EmptyDay extends StatelessWidget {
             Icon(Icons.fitness_center, size: 56, color: Colors.black26),
             SizedBox(height: 12),
             Text(
-              'No exercises logged for this day yet.\nTap “Add exercise” to start.',
+              'No exercises logged for this day yet.\n'
+              'Tap “Add exercise” or apply a template from the menu.',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.black54),
             ),

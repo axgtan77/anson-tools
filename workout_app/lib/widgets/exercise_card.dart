@@ -14,6 +14,11 @@ class ExerciseCard extends StatelessWidget {
   final ValueChanged<WorkoutSet> onTapSet;
   final ValueChanged<WorkoutSet> onLongPressSet;
   final VoidCallback onTapTitle;
+  final VoidCallback? onRemoveFromDay;
+
+  /// When non-null, a drag handle is shown that starts a reorder drag at this
+  /// index in the parent [ReorderableListView].
+  final int? dragIndex;
 
   const ExerciseCard({
     super.key,
@@ -24,6 +29,8 @@ class ExerciseCard extends StatelessWidget {
     required this.onTapSet,
     required this.onLongPressSet,
     required this.onTapTitle,
+    this.onRemoveFromDay,
+    this.dragIndex,
   });
 
   @override
@@ -39,54 +46,86 @@ class ExerciseCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.fromLTRB(10, 6, 4, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            InkWell(
-              onTap: onTapTitle,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        exercise.name,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: onTapTitle,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              exercise.name,
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(maxRMLabel,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.w500)),
+                        ],
                       ),
                     ),
-                    Text(maxRMLabel,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w500)),
-                    const SizedBox(width: 4),
-                    const Icon(Icons.chevron_right,
-                        size: 18, color: Colors.black38),
-                  ],
+                  ),
                 ),
-              ),
+                if (dragIndex != null)
+                  ReorderableDragStartListener(
+                    index: dragIndex!,
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 4),
+                      child: Icon(Icons.drag_handle,
+                          color: Colors.black38, size: 22),
+                    ),
+                  ),
+                if (onRemoveFromDay != null)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert,
+                        color: Colors.black38, size: 20),
+                    onSelected: (v) {
+                      if (v == 'remove') onRemoveFromDay!();
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                          value: 'remove',
+                          child: Text('Remove from this workout')),
+                    ],
+                  ),
+              ],
             ),
-            const SizedBox(height: 4),
             ...List.generate(sets.length, (i) {
               final s = sets[i];
-              return _SetRow(
-                displayNumber: i + 1,
-                set: s,
-                isMaxRM: !s.isBodyweight &&
-                    allTimeMaxRM > 0 &&
-                    (s.estimated1RM - allTimeMaxRM).abs() < 0.005,
-                onTap: () => onTapSet(s),
-                onLongPress: () => onLongPressSet(s),
+              return Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: _SetRow(
+                  displayNumber: i + 1,
+                  set: s,
+                  isMaxRM: !s.isBodyweight &&
+                      allTimeMaxRM > 0 &&
+                      (s.estimated1RM - allTimeMaxRM).abs() < 0.005,
+                  onTap: () => onTapSet(s),
+                  onLongPress: () => onLongPressSet(s),
+                ),
               );
             }),
             const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton.icon(
-                onPressed: onAddSet,
-                style: TextButton.styleFrom(foregroundColor: Colors.red),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add set'),
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onAddSet,
+                  style: TextButton.styleFrom(foregroundColor: Colors.red),
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add set'),
+                ),
               ),
             ),
           ],

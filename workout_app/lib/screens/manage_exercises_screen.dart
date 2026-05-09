@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../db/database_helper.dart';
 import '../models/exercise.dart';
@@ -44,6 +45,37 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
         const SnackBar(content: Text('That name already exists.')),
       );
     }
+  }
+
+  Future<void> _editRest(Exercise e) async {
+    final ctrl = TextEditingController(text: e.restSeconds.toString());
+    final result = await showDialog<int>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text('${e.name} — rest seconds'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(labelText: 'Seconds'),
+          onSubmitted: (v) =>
+              Navigator.pop(context, int.tryParse(v) ?? e.restSeconds),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(
+                  context, int.tryParse(ctrl.text) ?? e.restSeconds),
+              child: const Text('OK')),
+        ],
+      ),
+    );
+    if (result == null || result < 0) return;
+    await DatabaseHelper.instance.setRestSeconds(e.id!, result);
+    await _load();
   }
 
   Future<void> _delete(Exercise e) async {
@@ -100,6 +132,13 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
     DatabaseHelper.instance.reorderExercises(list);
   }
 
+  String _fmtRest(int seconds) {
+    if (seconds < 60) return '${seconds}s';
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return s == 0 ? '${m}m' : '${m}m ${s}s';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -130,6 +169,17 @@ class _ManageExercisesScreenState extends State<ManageExercisesScreen> {
                         color: Colors.black45),
                   ),
                   title: Text(e.name),
+                  subtitle: GestureDetector(
+                    onTap: () => _editRest(e),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        'Rest: ${_fmtRest(e.restSeconds)}  (tap to change)',
+                        style: const TextStyle(
+                            fontSize: 12, color: Colors.black54),
+                      ),
+                    ),
+                  ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
